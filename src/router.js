@@ -13,6 +13,9 @@ import NoteSquare from './pages/NoteSquare.vue'
 import CheckIn from './pages/CheckIn.vue'
 import UserDetail from './pages/UserDetail.vue'
 import ChatList from './pages/ChatList.vue'
+import AllNotes from './pages/AllNotes.vue'
+import RecentNotes from './pages/RecentNotes.vue'
+import Favorites from './pages/Favorites.vue'
 
 const routes = [
   {
@@ -92,6 +95,22 @@ const routes = [
         path: '/chat/:userId',
         name: 'Chat',
         component: () => import('./pages/Chat.vue')
+      },
+      // 分类功能页面
+      {
+        path: '/all-notes',
+        name: 'AllNotes',
+        component: AllNotes
+      },
+      {
+        path: '/recent-notes',
+        name: 'RecentNotes',
+        component: RecentNotes
+      },
+      {
+        path: '/favorites',
+        name: 'Favorites',
+        component: Favorites
       }
     ]
   },

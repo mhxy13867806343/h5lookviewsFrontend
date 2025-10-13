@@ -123,14 +123,69 @@
         </div>
       </div>
     </van-popup>
+
+    <!-- 编辑分类弹窗 -->
+    <van-popup v-model:show="showEditCategory" position="bottom">
+      <div class="edit-category-form">
+        <van-nav-bar title="编辑分类" left-text="取消" @click-left="showEditCategory = false">
+          <template #right>
+            <van-button type="primary" size="small" @click="saveEditCategory">
+              保存
+            </van-button>
+          </template>
+        </van-nav-bar>
+        
+        <div class="form-content">
+          <van-field
+            v-model="editingCategory.name"
+            label="分类名称"
+            placeholder="请输入分类名称"
+            required
+            :rules="[{ required: true, message: '请填写分类名称' }]"
+          />
+          <van-field label="分类颜色">
+            <template #input>
+              <div class="color-picker">
+                <div
+                  v-for="color in colorOptions"
+                  :key="color"
+                  class="color-option"
+                  :class="{ active: editingCategory.color === color }"
+                  :style="{ backgroundColor: color }"
+                  @click="editingCategory.color = color"
+                ></div>
+              </div>
+            </template>
+          </van-field>
+          
+          <!-- 删除按钮 -->
+          <div class="delete-section">
+            <van-button 
+              type="danger" 
+              block 
+              @click="deleteCategory"
+              :disabled="getCurrentCategoryCount() > 0"
+            >
+              删除分类
+              <span v-if="getCurrentCategoryCount() > 0" class="delete-tip">
+                (该分类下还有笔记，无法删除)
+              </span>
+            </van-button>
+          </div>
+        </div>
+      </div>
+    </van-popup>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { showSuccessToast, showFailToast } from 'vant'
+import { showSuccessToast, showFailToast, showDialog } from 'vant'
+import { useRouter } from 'vue-router'
 
 const showAddCategory = ref(false)
+const showEditCategory = ref(false)
+const router = useRouter()
 
 const categories = ref([
   { id: 1, name: '生活随记', color: '#74b9ff', count: 12 },
@@ -142,6 +197,12 @@ const categories = ref([
 ])
 
 const newCategory = reactive({
+  name: '',
+  color: '#74b9ff'
+})
+
+const editingCategory = reactive({
+  id: null,
   name: '',
   color: '#74b9ff'
 })
@@ -164,7 +225,49 @@ const viewCategoryNotes = (category) => {
 }
 
 const editCategory = (category) => {
-  showSuccessToast(`编辑分类: ${category.name}`)
+  editingCategory.id = category.id
+  editingCategory.name = category.name
+  editingCategory.color = category.color
+  showEditCategory.value = true
+}
+
+const saveEditCategory = () => {
+  if (!editingCategory.name.trim()) {
+    showFailToast('请输入分类名称')
+    return
+  }
+
+  const categoryIndex = categories.value.findIndex(c => c.id === editingCategory.id)
+  if (categoryIndex !== -1) {
+    categories.value[categoryIndex].name = editingCategory.name
+    categories.value[categoryIndex].color = editingCategory.color
+    showSuccessToast('分类修改成功')
+    showEditCategory.value = false
+  }
+}
+
+const deleteCategory = () => {
+  const currentCategory = categories.value.find(c => c.id === editingCategory.id)
+  if (currentCategory && currentCategory.count > 0) {
+    showFailToast('该分类下还有笔记，无法删除')
+    return
+  }
+
+  showDialog({
+    title: '确认删除',
+    message: `确定要删除分类"${editingCategory.name}"吗？`,
+    showCancelButton: true,
+    confirmButtonColor: '#ee0a24',
+  }).then(() => {
+    const categoryIndex = categories.value.findIndex(c => c.id === editingCategory.id)
+    if (categoryIndex !== -1) {
+      categories.value.splice(categoryIndex, 1)
+      showSuccessToast('分类删除成功')
+      showEditCategory.value = false
+    }
+  }).catch(() => {
+    // 用户取消删除
+  })
 }
 
 const addCategory = () => {
@@ -188,15 +291,20 @@ const addCategory = () => {
 }
 
 const viewAllNotes = () => {
-  showSuccessToast('查看全部笔记')
+  router.push('/all-notes')
 }
 
 const viewRecentNotes = () => {
-  showSuccessToast('查看最近编辑的笔记')
+  router.push('/recent-notes')
 }
 
 const viewFavorites = () => {
-  showSuccessToast('查看收藏的笔记')
+  router.push('/favorites')
+}
+
+const getCurrentCategoryCount = () => {
+  const currentCategory = categories.value.find(c => c.id === editingCategory.id)
+  return currentCategory ? currentCategory.count : 0
 }
 
 const viewTrash = () => {
@@ -289,7 +397,8 @@ const viewTrash = () => {
   }
 }
 
-.add-category-form {
+.add-category-form,
+.edit-category-form {
   .form-content {
     padding: var(--spacing-md);
   }
@@ -311,6 +420,18 @@ const viewTrash = () => {
         border-color: var(--text-primary);
         transform: scale(1.1);
       }
+    }
+  }
+  
+  .delete-section {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    
+    .delete-tip {
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+      margin-left: var(--spacing-xs);
     }
   }
 }

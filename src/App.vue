@@ -22,8 +22,4 @@ body {
   background-color: #f7f8fa;
 }
 
-#app {
-  height: 100vh;
-  overflow: hidden;
-}
 </style>
