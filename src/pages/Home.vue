@@ -103,7 +103,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccessToast, showImagePreview, ActionSheet, ShareSheet } from 'vant'
+import { showSuccessToast, showImagePreview, ActionSheet } from 'vant'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -263,31 +263,21 @@ const showComments = (note) => {
 }
 
 // 分享动态
-const shareNote = (note) => {
-  ShareSheet({
-    title: '立即分享给好友',
-    options: [
-      { name: '复制链接', icon: 'link' }
-    ],
-    onSelect: async (option) => {
-      if (option.name === '复制链接') {
-        try {
-          const url = `${window.location.origin}/post/${note.id}`
-          await navigator.clipboard.writeText(url)
-          showSuccessToast('链接已复制到剪贴板')
-        } catch (error) {
-          // 兜底方案
-          const textArea = document.createElement('textarea')
-          textArea.value = `${window.location.origin}/post/${note.id}`
-          document.body.appendChild(textArea)
-          textArea.select()
-          document.execCommand('copy')
-          document.body.removeChild(textArea)
-          showSuccessToast('链接已复制到剪贴板')
-        }
-      }
-    }
-  })
+const shareNote = async (note) => {
+  try {
+    const url = `${window.location.origin}/post/${note.id}`
+    await navigator.clipboard.writeText(url)
+    showSuccessToast('链接已复制到剪贴板')
+  } catch (error) {
+    // 兜底方案
+    const textArea = document.createElement('textarea')
+    textArea.value = `${window.location.origin}/post/${note.id}`
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    showSuccessToast('链接已复制到剪贴板')
+  }
 }
 
 // 更多操作
