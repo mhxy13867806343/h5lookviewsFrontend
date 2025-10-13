@@ -20,7 +20,7 @@
         <div class="user-header">
           <div class="avatar-section">
             <van-image
-              :src="userInfo.avatar"
+              :src="userInfo&&userInfo.avatar"
               round
               width="80"
               height="80"
@@ -517,8 +517,8 @@ const submitComment = async () => {
     // 模拟发送评论
     const newComment = {
       id: Date.now(),
-      avatar: userStore.user.avatar,
-      nickname: userStore.user.nickname,
+      avatar: userStore.user&&userStore.user.avatar,
+      nickname: userStore.user&&userStore.user.nickname,
       content: commentText.value,
       createTime: new Date(),
       likesCount: 0,

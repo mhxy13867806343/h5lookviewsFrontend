@@ -7,7 +7,7 @@
       <div class="user-info" v-if="userStore.isLoggedIn">
         <div class="avatar" @click="viewMyProfile">
           <van-image
-            :src="userStore.user.avatar"
+            :src="userStore.user?.avatar"
             round
             width="80"
             height="80"
@@ -15,8 +15,8 @@
           />
         </div>
         <div class="user-details">
-          <h3>{{ userStore.user.nickname }}</h3>
-          <p>{{ userStore.user.signature || '暂无个性签名' }}</p>
+          <h3>{{ userStore.user?.nickname }}</h3>
+          <p>{{ userStore.user?.signature || '暂无个性签名' }}</p>
           
           <!-- 用户标签显示 -->
           <div class="user-tags" v-if="userTags.length > 0">
@@ -199,7 +199,7 @@ const goToDiscoverUsers = () => {
 }
 
 const viewMyProfile = () => {
-  router.push(`/user/${userStore.user.id}`)
+  router.push(`/user/${userStore.user?.id}`)
 }
 
 const goToMyPosts = () => {
@@ -226,9 +226,9 @@ const logout = () => {
 // 编辑资料相关方法
 const editProfile = () => {
   editForm.value = {
-    nickname: userStore.user.nickname,
-    signature: userStore.user.signature || '',
-    location: userStore.user.location || ''
+    nickname: userStore.user?.nickname,
+    signature: userStore.user?.signature || '',
+    location: userStore.user?.location || ''
   }
   showEditProfile.value = true
 }
