@@ -2,28 +2,31 @@
   <van-dialog
     v-model:show="showDialog"
     title="选择举报原因"
-    :show-cancel-button="true"
+    :show-cancel-button="false"
     :before-close="handleBeforeClose"
     class="report-dialog"
+    :close-on-click-overlay="false"
   >
     <div class="report-content">
-      <div class="report-types">
-        <div
-          v-for="type in reportTypes"
-          :key="type.value"
-          class="report-type-item"
-          :class="{ active: selectedType === type.value }"
-          @click="selectedType = type.value"
-        >
-          <div class="type-header">
-            <span class="type-label">{{ type.label }}</span>
-            <van-icon 
-              name="success" 
-              v-show="selectedType === type.value"
-              color="#1989fa"
-            />
+      <div class="report-types-container">
+        <div class="report-types">
+          <div
+            v-for="type in reportTypes"
+            :key="type.value"
+            class="report-type-item"
+            :class="{ active: selectedType === type.value }"
+            @click="selectedType = type.value"
+          >
+            <div class="type-header">
+              <span class="type-label">{{ type.label }}</span>
+              <van-icon 
+                name="success" 
+                v-show="selectedType === type.value"
+                color="#1989fa"
+              />
+            </div>
+            <div class="type-description">{{ type.description }}</div>
           </div>
-          <div class="type-description">{{ type.description }}</div>
         </div>
       </div>
       
@@ -129,19 +132,65 @@ const handleBeforeClose = (action) => {
   :deep(.van-dialog) {
     width: 90%;
     max-width: 400px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  :deep(.van-dialog__header) {
+    flex-shrink: 0;
   }
   
   :deep(.van-dialog__content) {
+    flex: 1;
     max-height: 60vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+  }
+  
+  :deep(.van-dialog__footer) {
+    flex-shrink: 0;
+    padding: 0;
   }
 }
 
 .report-content {
-  padding: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-types-container {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 50vh;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
 }
 
 .report-types {
+  max-height: none;
+  
   .report-type-item {
     padding: var(--spacing-md);
     border-radius: var(--border-radius-md);
@@ -149,6 +198,7 @@ const handleBeforeClose = (action) => {
     cursor: pointer;
     transition: var(--transition-base);
     border: 2px solid transparent;
+    background-color: var(--background-secondary);
     
     &:hover {
       background-color: var(--background-primary);
@@ -157,6 +207,10 @@ const handleBeforeClose = (action) => {
     &.active {
       border-color: var(--primary-color);
       background-color: rgba(25, 137, 250, 0.05);
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
     }
     
     .type-header {
