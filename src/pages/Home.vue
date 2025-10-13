@@ -97,6 +97,15 @@
     
     <!-- 空状态 -->
     <van-empty v-if="!loading && filteredNotes.length === 0" description="暂无动态" />
+
+    <!-- 分享面板 -->
+    <van-share-sheet
+      v-model:show="showShareSheet"
+      title="分享到"
+      :options="shareOptions"
+      @select="onShareSelect"
+      @cancel="onShareCancel"
+    />
   </div>
 </template>
 
@@ -115,6 +124,25 @@ const loading = ref(false)
 // 长按相关
 const longPressTimer = ref(null)
 const isLongPress = ref(false)
+
+// 分享相关
+const showShareSheet = ref(false)
+const currentShareNote = ref(null)
+
+// 分享选项
+const shareOptions = ref([
+  [
+    { name: '微信', icon: 'wechat' },
+    { name: '微博', icon: 'weibo' },
+    { name: 'QQ', icon: 'qq' },
+    { name: '复制链接', icon: 'link' },
+  ],
+  [
+    { name: '朋友圈', icon: 'wechat-moments' },
+    { name: '钉钉', icon: 'share' },
+    { name: '更多', icon: 'ellipsis' },
+  ]
+])
 
 // 模拟笔记数据
 const notes = ref([
@@ -263,21 +291,76 @@ const showComments = (note) => {
 }
 
 // 分享动态
-const shareNote = async (note) => {
-  try {
-    const url = `${window.location.origin}/post/${note.id}`
-    await navigator.clipboard.writeText(url)
-    showSuccessToast('链接已复制到剪贴板')
-  } catch (error) {
-    // 兜底方案
-    const textArea = document.createElement('textarea')
-    textArea.value = `${window.location.origin}/post/${note.id}`
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    showSuccessToast('链接已复制到剪贴板')
+const shareNote = (note) => {
+  currentShareNote.value = note
+  showShareSheet.value = true
+}
+
+// 处理分享选择
+const onShareSelect = async (option, index) => {
+  const note = currentShareNote.value
+  if (!note) return
+
+  const shareUrl = `${window.location.origin}/post/${note.id}`
+  const shareText = `${note.username}：${note.content.slice(0, 50)}${note.content.length > 50 ? '...' : ''}`
+  
+  switch (option.name) {
+    case '微信':
+      showSuccessToast('请在微信中选择联系人分享')
+      break
+    case '微博':
+      window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareText)}`)
+      break
+    case 'QQ':
+      showSuccessToast('请在QQ中选择好友分享')
+      break
+    case '朋友圈':
+      showSuccessToast('请在微信朋友圈中分享')
+      break
+    case '钉钉':
+      showSuccessToast('请在钉钉中选择联系人分享')
+      break
+    case '复制链接':
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        showSuccessToast('链接已复制到剪贴板')
+      } catch (error) {
+        // 兜底方案
+        const textArea = document.createElement('textarea')
+        textArea.value = shareUrl
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        showSuccessToast('链接已复制到剪贴板')
+      }
+      break
+    case '更多':
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: '动态分享',
+            text: shareText,
+            url: shareUrl
+          })
+        } catch (error) {
+          console.log('分享取消或失败')
+        }
+      } else {
+        showSuccessToast('您的浏览器不支持原生分享')
+      }
+      break
+    default:
+      showSuccessToast(`分享到${option.name}`)
   }
+  
+  showShareSheet.value = false
+}
+
+// 取消分享
+const onShareCancel = () => {
+  showShareSheet.value = false
+  currentShareNote.value = null
 }
 
 // 更多操作
