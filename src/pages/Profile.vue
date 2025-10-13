@@ -203,11 +203,13 @@ const viewMyProfile = () => {
 }
 
 const goToMyPosts = () => {
-  showSuccessToast('查看我的动态')
+  // 跳转到用户详情页的动态tab
+  router.push(`/user/${userStore.user.id}`)
 }
 
 const goToMyNotes = () => {
-  showSuccessToast('查看我的笔记')
+  // 模拟跳转到笔记详情页
+  router.push('/note/demo-note-1')
 }
 
 const logout = () => {

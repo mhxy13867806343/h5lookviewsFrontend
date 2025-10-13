@@ -383,7 +383,7 @@ const showLikesList = () => {
 }
 
 const viewPost = (post) => {
-  showSuccessToast('查看动态详情')
+  router.push(`/post/${post.id}`)
 }
 
 const showPostActions = (post) => {

@@ -94,6 +94,17 @@ const routes = [
         component: () => import('./pages/Chat.vue')
       }
     ]
+  },
+  // 详情页面路由（不在Layout中）
+  {
+    path: '/post/:id',
+    name: 'PostDetail',
+    component: () => import('./pages/PostDetail.vue')
+  },
+  {
+    path: '/note/:id',
+    name: 'NoteDetail',
+    component: () => import('./pages/NoteDetail.vue')
   }
 ]
 
