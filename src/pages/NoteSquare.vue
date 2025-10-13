@@ -194,6 +194,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview } from 'vant'
+import { useShare } from '../hooks/useShare.js'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -205,24 +206,14 @@ const showCommentPopup = ref(false)
 const commentText = ref('')
 const currentNote = ref(null)
 
-// 分享相关
-const showShareSheet = ref(false)
-const currentShareNote = ref(null)
-
-// 分享选项
-const shareOptions = ref([
-  [
-    { name: '微信', icon: 'wechat' },
-    { name: '微博', icon: 'weibo' },
-    { name: 'QQ', icon: 'qq' },
-    { name: '复制链接', icon: 'link' },
-  ],
-  [
-    { name: '朋友圈', icon: 'wechat-moments' },
-    { name: '钉钉', icon: 'share' },
-    { name: '更多', icon: 'ellipsis' },
-  ]
-])
+// 使用分享 hooks
+const {
+  showShareSheet,
+  shareOptions,
+  onShareSelect,
+  onShareCancel,
+  shareNote: shareNoteWithHook
+} = useShare()
 
 // 模拟笔记数据
 const notes = ref([
@@ -424,76 +415,9 @@ const toggleCollect = (note) => {
   showSuccessToast(note.isCollected ? '已收藏' : '已取消收藏')
 }
 
+// 分享笔记 - 使用 hooks 中的方法
 const shareNote = (note) => {
-  currentShareNote.value = note
-  showShareSheet.value = true
-}
-
-// 处理分享选择
-const onShareSelect = async (option, index) => {
-  const note = currentShareNote.value
-  if (!note) return
-
-  const shareUrl = `${window.location.origin}/note/${note.id}`
-  const shareText = `${note.author.name}：${note.title || note.content.slice(0, 50)}${(note.title || note.content).length > 50 ? '...' : ''}`
-  
-  switch (option.name) {
-    case '微信':
-      showSuccessToast('请在微信中选择联系人分享')
-      break
-    case '微博':
-      window.open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareText)}`)
-      break
-    case 'QQ':
-      showSuccessToast('请在QQ中选择好友分享')
-      break
-    case '朋友圈':
-      showSuccessToast('请在微信朋友圈中分享')
-      break
-    case '钉钉':
-      showSuccessToast('请在钉钉中选择联系人分享')
-      break
-    case '复制链接':
-      try {
-        await navigator.clipboard.writeText(shareUrl)
-        showSuccessToast('链接已复制到剪贴板')
-      } catch (error) {
-        // 兜底方案
-        const textArea = document.createElement('textarea')
-        textArea.value = shareUrl
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-        showSuccessToast('链接已复制到剪贴板')
-      }
-      break
-    case '更多':
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: '笔记分享',
-            text: shareText,
-            url: shareUrl
-          })
-        } catch (error) {
-          console.log('分享取消或失败')
-        }
-      } else {
-        showSuccessToast('您的浏览器不支持原生分享')
-      }
-      break
-    default:
-      showSuccessToast(`分享到${option.name}`)
-  }
-  
-  showShareSheet.value = false
-}
-
-// 取消分享
-const onShareCancel = () => {
-  showShareSheet.value = false
-  currentShareNote.value = null
+  shareNoteWithHook(note)
 }
 
 const showComments = (note) => {
