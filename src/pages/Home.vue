@@ -113,6 +113,31 @@
       :actions="moreActions"
       @select="onActionSelect"
     />
+
+    <!-- 举报对话框 -->
+    <ReportDialog
+      v-model:show="showReportTypeDialog"
+      :report-types="reportTypes"
+      :loading="reportLoading"
+      @submit="handleReportSubmit"
+      @cancel="handleReportCancel"
+    />
+=======
+    <!-- 更多操作面板 -->
+    <van-action-sheet
+      v-model:show="showActionSheet"
+      :actions="moreActions"
+      @select="onActionSelect"
+    />
+
+    <!-- 举报对话框 -->
+    <ReportDialog
+      v-model:show="showReportTypeDialog"
+      :report-types="reportTypes"
+      :loading="reportLoading"
+      @submit="handleReportSubmit"
+      @cancel="handleReportCancel"
+    />
   </div>
 </template>
 
@@ -121,7 +146,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview, showDialog } from 'vant'
 import { useShare } from '../hooks/useShare.js'
+import { useReport } from '../hooks/useReport.js'
+import ReportDialog from '../components/ReportDialog.vue'
 import dayjs from 'dayjs'
+
+// 注册组件
+defineOptions({
+  components: {
+    ReportDialog
+  }
+})
 
 const router = useRouter()
 
@@ -143,6 +177,16 @@ const {
   onShareCancel,
   sharePost
 } = useShare()
+
+// 使用举报 hooks
+const {
+  showReportTypeDialog,
+  reportTypes,
+  reportLoading,
+  submitReport,
+  reportPost,
+  resetReportState
+} = useReport()
 
 // 模拟笔记数据
 const notes = ref([
@@ -309,9 +353,32 @@ const moreActions = [
 
 const onActionSelect = (action) => {
   showActionSheet.value = false
-  if (action.name !== '取消') {
-    showSuccessToast(`选择了: ${action.name}`)
+  
+  switch (action.name) {
+    case '举报':
+      if (currentNote.value) {
+        reportPost(currentNote.value)
+      }
+      break
+    case '不感兴趣':
+      showSuccessToast('已标记为不感兴趣')
+      break
+    default:
+      break
   }
+}
+
+// 处理举报提交
+const handleReportSubmit = async (reportData) => {
+  const success = await submitReport(reportData.type, reportData.customReason)
+  if (success) {
+    resetReportState()
+  }
+}
+
+// 处理举报取消
+const handleReportCancel = () => {
+  resetReportState()
 }
 
 // 预览图片
