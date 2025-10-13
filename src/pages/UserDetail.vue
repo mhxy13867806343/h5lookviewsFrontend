@@ -295,12 +295,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
+import { useShare } from '../hooks/useShare.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview } from 'vant'
 import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+// 使用分享 hooks
+const { openShareSheet } = useShare()
 
 const userId = route.params.id
 const isCurrentUser = computed(() => userId === userStore.user?.id)
@@ -451,7 +455,13 @@ const handleCollect = async (post) => {
 }
 
 const handleShare = (post) => {
-  showSuccessToast('分享功能开发中')
+  const shareData = {
+    title: `${post.author.nickname}的动态`,
+    content: post.content,
+    url: `${window.location.origin}/post/${post.id}`,
+    type: 'post'
+  }
+  openShareSheet(shareData)
 }
 
 const loadMorePosts = async () => {

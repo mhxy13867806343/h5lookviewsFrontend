@@ -208,6 +208,7 @@
       title="立即分享给好友"
       :options="shareOptions"
       @select="onShareSelect"
+      @cancel="onShareCancel"
     />
   </div>
 </template>
@@ -216,6 +217,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
+import { useShare } from '../hooks/useShare.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
 
@@ -236,7 +238,15 @@ const likeLoading = ref(false)
 const collectLoading = ref(false)
 const commentLoading = ref(false)
 const showActionSheet = ref(false)
-const showShareSheet = ref(false)
+
+// 使用分享 hooks
+const {
+  showShareSheet,
+  shareOptions,
+  onShareSelect,
+  onShareCancel,
+  openShareSheet
+} = useShare()
 
 // 计算属性
 const isAuthor = computed(() => {
@@ -260,11 +270,6 @@ const actionSheetActions = computed(() => {
   actions.push({ name: '取消', value: 'cancel' })
   return actions
 })
-
-// 分享选项
-const shareOptions = [
-  { name: '复制链接', icon: 'link', value: 'copy' },
-]
 
 // 方法
 const handleBack = () => {
@@ -354,7 +359,15 @@ const handleCollect = async () => {
 }
 
 const handleShare = () => {
-  showShareSheet.value = true
+  if (postInfo.value) {
+    const shareData = {
+      title: `${postInfo.value.author.nickname}的动态`,
+      content: postInfo.value.content,
+      url: `${window.location.origin}/post/${postInfo.value.id}`,
+      type: 'post'
+    }
+    openShareSheet(shareData)
+  }
 }
 
 const focusCommentInput = () => {
@@ -455,28 +468,7 @@ const onActionSelect = (action) => {
   }
 }
 
-const onShareSelect = async (option) => {
-  showShareSheet.value = false
-  
-  switch (option.value) {
-    case 'copy':
-      try {
-        const url = `${window.location.origin}/post/${postId}`
-        await navigator.clipboard.writeText(url)
-        showSuccessToast('链接已复制到剪贴板')
-      } catch (error) {
-        // 兜底方案
-        const textArea = document.createElement('textarea')
-        textArea.value = `${window.location.origin}/post/${postId}`
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-        showSuccessToast('链接已复制到剪贴板')
-      }
-      break
-  }
-}
+
 
 const formatTime = (time) => {
   return dayjs(time).format('MM-DD HH:mm')
