@@ -1,0 +1,118 @@
+// 全局CSS变量
+:root {
+  // 主色调
+  --primary-color: #1989fa;
+  --primary-light: #4dabf7;
+  --primary-dark: #1971c2;
+  
+  // 辅助色
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  --info-color: #1890ff;
+  
+  // 中性色
+  --text-primary: #323233;
+  --text-secondary: #969799;
+  --text-disabled: #c8c9cc;
+  --background-primary: #f7f8fa;
+  --background-secondary: #ffffff;
+  --border-color: #ebedf0;
+  
+  // 渐变色
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-success: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  --gradient-warning: linear-gradient(135deg, #faad14 0%, #d48806 100%);
+  --gradient-error: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+  
+  // 商品卡片色彩
+  --product-color-1: #ffeaa7;
+  --product-color-2: #fab1a0;
+  --product-color-3: #fd79a8;
+  --product-color-4: #a29bfe;
+  --product-color-5: #74b9ff;
+  --product-color-6: #00b894;
+  --product-color-7: #00cec9;
+  --product-color-8: #e84393;
+  
+  // 轮播图颜色
+  --banner-color-1: #ff6b6b;
+  --banner-color-2: #4ecdc4;
+  --banner-color-3: #45b7d1;
+  
+  // 间距
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  // 圆角
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  
+  // 阴影
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+  
+  // 字体大小
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+  
+  // 动画时长
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.5s;
+}
+
+// SCSS变量（用于计算和函数）
+$primary-color: #1989fa;
+$success-color: #52c41a;
+$warning-color: #faad14;
+$error-color: #ff4d4f;
+$text-primary: #323233;
+$text-secondary: #969799;
+$background-primary: #f7f8fa;
+$background-secondary: #ffffff;
+
+// 混合器
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@mixin product-card {
+  background: var(--background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+@mixin banner-item {
+  height: 100%;
+  @include flex-center;
+  flex-direction: column;
+  color: white;
+  text-align: center;
+  border-radius: var(--border-radius-md);
+}

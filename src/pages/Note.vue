@@ -1,0 +1,384 @@
+<template>
+  <div class="note">
+    <van-nav-bar :title="isEditing ? '编辑笔记' : '写笔记'" left-arrow @click-left="handleBack">
+      <template #right>
+        <van-button 
+          type="primary" 
+          size="small" 
+          @click="saveNote"
+          :loading="saving"
+        >
+          {{ isEditing ? '更新' : '保存' }}
+        </van-button>
+      </template>
+    </van-nav-bar>
+    
+    <div class="note-content">
+      <!-- 标题输入 -->
+      <van-field
+        v-model="noteData.title"
+        placeholder="请输入笔记标题（可选）"
+        class="title-input"
+        maxlength="100"
+        show-word-limit
+      />
+      
+      <!-- 内容输入 -->
+      <van-field
+        v-model="noteData.content"
+        type="textarea"
+        placeholder="开始写下你的想法..."
+        :maxlength="20000"
+        show-word-limit
+        autosize
+        class="content-input"
+      />
+      
+      <!-- 分类选择 -->
+      <div class="category-section">
+        <van-cell 
+          title="选择分类" 
+          :value="selectedCategory?.name || '未分类'"
+          is-link 
+          @click="showCategoryPicker = true"
+        >
+          <template #icon>
+            <div 
+              class="category-color"
+              :style="{ backgroundColor: selectedCategory?.color || '#ddd' }"
+            ></div>
+          </template>
+        </van-cell>
+      </div>
+      
+      <!-- 操作按钮 -->
+      <div class="action-buttons">
+        <van-button 
+          block 
+          type="default" 
+          @click="saveDraft"
+          :loading="savingDraft"
+        >
+          临时保存
+        </van-button>
+        <van-button 
+          block 
+          type="primary" 
+          @click="saveNote"
+          :loading="saving"
+          class="save-btn"
+        >
+          {{ isEditing ? '更新笔记' : '保存笔记' }}
+        </van-button>
+      </div>
+      
+      <!-- 草稿提示 -->
+      <div v-if="hasDraft" class="draft-tip">
+        <van-notice-bar
+          left-icon="info-o"
+          text="检测到未保存的草稿"
+        >
+          <template #right-icon>
+            <van-button size="mini" @click="loadDraft">恢复</van-button>
+          </template>
+        </van-notice-bar>
+      </div>
+    </div>
+    
+    <!-- 分类选择器 -->
+    <van-popup v-model:show="showCategoryPicker" position="bottom">
+      <van-picker
+        :columns="categoryColumns"
+        @confirm="onCategoryConfirm"
+        @cancel="showCategoryPicker = false"
+      />
+    </van-popup>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { showSuccessToast, showConfirmDialog } from 'vant'
+import dayjs from 'dayjs'
+
+const router = useRouter()
+const route = useRoute()
+
+// 响应式数据
+const noteData = reactive({
+  id: null,
+  title: '',
+  content: '',
+  categoryId: null,
+  createTime: null,
+  updateTime: null
+})
+
+const saving = ref(false)
+const savingDraft = ref(false)
+const showCategoryPicker = ref(false)
+const isEditing = ref(false)
+const hasDraft = ref(false)
+
+// 分类数据
+const categories = ref([
+  { id: 1, name: '生活随记', color: '#74b9ff' },
+  { id: 2, name: '工作学习', color: '#00b894' },
+  { id: 3, name: '美食分享', color: '#fdcb6e' },
+  { id: 4, name: '旅行游记', color: '#e84393' },
+  { id: 5, name: '读书笔记', color: '#6c5ce7' },
+  { id: 6, name: '未分类', color: '#ddd' }
+])
+
+// 计算属性
+const selectedCategory = computed(() => {
+  return categories.value.find(cat => cat.id === noteData.categoryId) || categories.value[5]
+})
+
+const categoryColumns = computed(() => {
+  return categories.value.map(cat => ({
+    text: cat.name,
+    value: cat.id,
+    color: cat.color
+  }))
+})
+
+// 自动保存定时器
+let autoSaveTimer = null
+
+// 方法
+const handleBack = () => {
+  if (hasUnsavedChanges()) {
+    showConfirmDialog({
+      title: '提示',
+      message: '你有未保存的内容，确定要离开吗？',
+    }).then(() => {
+      router.back()
+    }).catch(() => {
+      // 用户取消
+    })
+  } else {
+    router.back()
+  }
+}
+
+const hasUnsavedChanges = () => {
+  return noteData.title.trim() !== '' || noteData.content.trim() !== ''
+}
+
+const saveNote = async () => {
+  if (!noteData.content.trim()) {
+    showSuccessToast('请输入笔记内容')
+    return
+  }
+  
+  saving.value = true
+  
+  try {
+    // 模拟保存API调用
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const now = new Date()
+    if (isEditing.value) {
+      noteData.updateTime = now
+      showSuccessToast('笔记更新成功')
+    } else {
+      noteData.id = Date.now()
+      noteData.createTime = now
+      noteData.updateTime = now
+      showSuccessToast('笔记保存成功')
+    }
+    
+    // 清除草稿
+    clearDraft()
+    
+    // 返回上一页
+    setTimeout(() => {
+      router.back()
+    }, 500)
+    
+  } catch (error) {
+    showSuccessToast('保存失败，请重试')
+  } finally {
+    saving.value = false
+  }
+}
+
+const saveDraft = async () => {
+  if (!noteData.content.trim() && !noteData.title.trim()) {
+    showSuccessToast('没有内容需要保存')
+    return
+  }
+  
+  savingDraft.value = true
+  
+  try {
+    // 保存到本地存储
+    const draftData = {
+      title: noteData.title,
+      content: noteData.content,
+      categoryId: noteData.categoryId,
+      saveTime: new Date().toISOString()
+    }
+    
+    localStorage.setItem('note_draft', JSON.stringify(draftData))
+    hasDraft.value = true
+    
+    showSuccessToast('草稿已保存')
+  } catch (error) {
+    showSuccessToast('草稿保存失败')
+  } finally {
+    savingDraft.value = false
+  }
+}
+
+const loadDraft = () => {
+  try {
+    const draftData = JSON.parse(localStorage.getItem('note_draft') || '{}')
+    if (draftData.title || draftData.content) {
+      noteData.title = draftData.title || ''
+      noteData.content = draftData.content || ''
+      noteData.categoryId = draftData.categoryId || null
+      showSuccessToast('草稿已恢复')
+    }
+  } catch (error) {
+    showSuccessToast('草稿恢复失败')
+  }
+}
+
+const clearDraft = () => {
+  localStorage.removeItem('note_draft')
+  hasDraft.value = false
+}
+
+const checkDraft = () => {
+  try {
+    const draft = localStorage.getItem('note_draft')
+    hasDraft.value = !!draft
+  } catch (error) {
+    hasDraft.value = false
+  }
+}
+
+const onCategoryConfirm = ({ selectedOptions }) => {
+  noteData.categoryId = selectedOptions[0].value
+  showCategoryPicker.value = false
+}
+
+// 自动保存功能
+const startAutoSave = () => {
+  autoSaveTimer = setInterval(() => {
+    if (hasUnsavedChanges()) {
+      saveDraft()
+    }
+  }, 30000) // 每30秒自动保存一次
+}
+
+const stopAutoSave = () => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
+// 生命周期
+onMounted(() => {
+  // 检查是否是编辑模式
+  if (route.params.id) {
+    isEditing.value = true
+    // 这里应该加载笔记数据
+    // loadNote(route.params.id)
+  }
+  
+  // 检查草稿
+  checkDraft()
+  
+  // 开始自动保存
+  startAutoSave()
+  
+  // 设置默认分类
+  if (!noteData.categoryId) {
+    noteData.categoryId = 6 // 未分类
+  }
+})
+
+onUnmounted(() => {
+  stopAutoSave()
+})
+</script>
+
+<style lang="scss" scoped>
+.note {
+  background-color: var(--background-primary);
+  min-height: 100vh;
+  
+  :deep(.van-nav-bar) {
+    background-color: var(--background-secondary);
+  }
+}
+
+.note-content {
+  padding: var(--spacing-md);
+}
+
+.title-input {
+  margin-bottom: var(--spacing-md);
+  
+  :deep(.van-field__control) {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+  }
+}
+
+.content-input {
+  margin-bottom: var(--spacing-lg);
+  
+  :deep(.van-field__control) {
+    min-height: 300px;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-relaxed);
+  }
+}
+
+.category-section {
+  margin-bottom: var(--spacing-lg);
+  
+  .category-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  
+  .save-btn {
+    background: linear-gradient(135deg, var(--primary-color), #4facfe);
+  }
+}
+
+.draft-tip {
+  margin-top: var(--spacing-md);
+}
+
+:deep(.van-picker) {
+  .van-picker-option {
+    display: flex;
+    align-items: center;
+    
+    &::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--color, #ddd);
+      margin-right: 8px;
+    }
+  }
+}
+</style>
