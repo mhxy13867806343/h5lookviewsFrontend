@@ -252,9 +252,9 @@ const viewUserProfile = (userId) => {
   router.push(`/user/${userId}`)
 }
 
-// 查看笔记详情
+// 查看动态详情
 const viewNote = (note) => {
-  router.push(`/note/${note.id}`)
+  router.push(`/post/${note.id}`)
 }
 
 // 显示评论
@@ -262,7 +262,7 @@ const showComments = (note) => {
   showSuccessToast(`查看评论: ${note.commentCount}条`)
 }
 
-// 分享笔记
+// 分享动态
 const shareNote = (note) => {
   ShareSheet({
     title: '立即分享给好友',
@@ -272,13 +272,13 @@ const shareNote = (note) => {
     onSelect: async (option) => {
       if (option.name === '复制链接') {
         try {
-          const url = `${window.location.origin}/note/${note.id}`
+          const url = `${window.location.origin}/post/${note.id}`
           await navigator.clipboard.writeText(url)
           showSuccessToast('链接已复制到剪贴板')
         } catch (error) {
           // 兜底方案
           const textArea = document.createElement('textarea')
-          textArea.value = `${window.location.origin}/note/${note.id}`
+          textArea.value = `${window.location.origin}/post/${note.id}`
           document.body.appendChild(textArea)
           textArea.select()
           document.execCommand('copy')
