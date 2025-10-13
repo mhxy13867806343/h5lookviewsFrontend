@@ -154,11 +154,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const route = useRoute()
 
 // 响应式数据
 const notes = ref([])
@@ -173,6 +174,16 @@ const currentNote = ref(null)
 // 筛选和排序
 const sortType = ref('updateTime')
 const categoryFilter = ref('all')
+
+// 分类映射，用于从分类名称获取分类ID
+const categoryNameMap = {
+  '生活随记': 1,
+  '工作学习': 2,
+  '美食分享': 3,
+  '旅行游记': 4,
+  '读书笔记': 5,
+  '运动健身': 6,
+}
 
 const sortOptions = [
   { text: '最近更新', value: 'updateTime' },
@@ -391,9 +402,35 @@ const generateMockNotes = (count) => {
   }))
 }
 
+// 初始化分类筛选
+const initializeCategoryFilter = () => {
+  // 从路由查询参数中获取分类信息
+  const categoryParam = route.query.category
+  
+  if (categoryParam) {
+    // 如果有分类参数，尝试找到对应的分类ID
+    const categoryId = categoryNameMap[categoryParam]
+    if (categoryId) {
+      // 找到对应分类，设置筛选
+      categoryFilter.value = categoryId
+      return
+    }
+  }
+  
+  // 如果没有分类参数或没找到对应分类，检查是否有默认分类
+  const firstCategory = categoryOptions.value.find(option => option.value !== 'all')
+  if (firstCategory) {
+    categoryFilter.value = firstCategory.value
+  } else {
+    // 最后的兜底，设置为全部分类
+    categoryFilter.value = 'all'
+  }
+}
+
 // 初始化数据
 onMounted(() => {
   notes.value = generateMockNotes(20)
+  initializeCategoryFilter()
 })
 </script>
 

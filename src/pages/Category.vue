@@ -221,7 +221,11 @@ const todayNotes = ref(3) // 模拟今日新增
 
 // 方法
 const viewCategoryNotes = (category) => {
-  showSuccessToast(`查看 ${category.name} 分类下的笔记`)
+  // 跳转到全部笔记页面，并传递分类参数
+  router.push({ 
+    path: '/all-notes', 
+    query: { category: category.name } 
+  })
 }
 
 const editCategory = (category) => {
@@ -291,6 +295,9 @@ const addCategory = () => {
 }
 
 const viewAllNotes = () => {
+  // 可以传递当前选中的分类信息，这里暂时不传递特定分类
+  // 如果需要传递特定分类，可以这样做：
+  // router.push({ path: '/all-notes', query: { category: '生活随记' } })
   router.push('/all-notes')
 }
 

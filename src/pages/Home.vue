@@ -106,13 +106,20 @@
       @select="onShareSelect"
       @cancel="onShareCancel"
     />
+
+    <!-- 更多操作面板 -->
+    <van-action-sheet
+      v-model:show="showActionSheet"
+      :actions="moreActions"
+      @select="onActionSelect"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccessToast, showImagePreview, ActionSheet } from 'vant'
+import { showSuccessToast, showImagePreview, showDialog } from 'vant'
 import { useShare } from '../hooks/useShare.js'
 import dayjs from 'dayjs'
 
@@ -121,6 +128,8 @@ const router = useRouter()
 const searchValue = ref('')
 const showSearch = ref(false)
 const loading = ref(false)
+const showActionSheet = ref(false)
+const currentNote = ref(null)
 
 // 长按相关
 const longPressTimer = ref(null)
@@ -288,16 +297,21 @@ const shareNote = (note) => {
 
 // 更多操作
 const showMoreActions = (note) => {
-  ActionSheet({
-    actions: [
-      { name: '举报', color: '#ee0a24' },
-      { name: '不感兴趣' },
-      { name: '取消' }
-    ],
-    onSelect: (action) => {
-      showSuccessToast(`选择了: ${action.name}`)
-    }
-  })
+  currentNote.value = note
+  showActionSheet.value = true
+}
+
+const moreActions = [
+  { name: '举报', color: '#ee0a24' },
+  { name: '不感兴趣' },
+  { name: '取消' }
+]
+
+const onActionSelect = (action) => {
+  showActionSheet.value = false
+  if (action.name !== '取消') {
+    showSuccessToast(`选择了: ${action.name}`)
+  }
 }
 
 // 预览图片
