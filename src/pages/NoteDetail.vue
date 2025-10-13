@@ -406,9 +406,10 @@ const handleCollect = async () => {
 const handleShare = () => {
   if (noteInfo.value) {
     const shareData = {
+      title: `${noteInfo.value.author.nickname}的笔记`,
+      content: noteInfo.value.title,
       url: `${window.location.origin}/note/${noteId}`,
-      title: '笔记分享',
-      text: `${noteInfo.value.author.nickname}：${noteInfo.value.title}`
+      type: 'note'
     }
     openShareSheet(shareData)
   }
