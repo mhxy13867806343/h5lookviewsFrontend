@@ -82,16 +82,19 @@
         
         <!-- 用户标签 -->
         <div class="user-tags" v-if="userInfo.tags && userInfo.tags.length">
-          <van-tag 
-            v-for="tag in userInfo.tags" 
-            :key="tag"
-            type="primary"
-            plain
-            size="mini"
-            class="tag-item"
-          >
-            {{ tag }}
-          </van-tag>
+          <div class="tags-title">个人标签</div>
+          <div class="tags-list">
+            <van-tag 
+              v-for="tag in userInfo.tags" 
+              :key="tag"
+              type="primary"
+              plain
+              size="small"
+              class="tag-item"
+            >
+              {{ tag }}
+            </van-tag>
+          </div>
         </div>
       </div>
       
@@ -797,12 +800,35 @@ onMounted(() => {
   }
   
   .user-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
     
-    .tag-item {
-      margin: 0;
+    .tags-title {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      
+      .tag-item {
+        margin: 0;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 4px 12px;
+        font-size: 12px;
+        
+        &.van-tag--plain {
+          background: rgba(64, 158, 255, 0.1);
+          color: var(--primary-color);
+          border: 1px solid rgba(64, 158, 255, 0.3);
+        }
+      }
     }
   }
 }
