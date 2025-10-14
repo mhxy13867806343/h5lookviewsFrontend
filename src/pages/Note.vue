@@ -51,6 +51,37 @@
         </van-cell>
       </div>
       
+      <!-- 定时发布 -->
+      <div class="timing-section">
+        <van-cell>
+          <template #title>
+            <div class="timing-title">
+              <van-icon name="clock-o" />
+              <span>定时发布</span>
+            </div>
+          </template>
+          <template #right-icon>
+            <van-switch 
+              v-model="timingEnabled" 
+              size="20px"
+              @change="onTimingToggle"
+            />
+          </template>
+        </van-cell>
+        
+        <van-cell 
+          v-if="timingEnabled"
+          title="发布时间" 
+          :value="scheduledTime ? dayjs(scheduledTime).format('YYYY-MM-DD HH:mm:ss') : '选择时间'"
+          is-link 
+          @click="showTimePicker = true"
+        >
+          <template #icon>
+            <van-icon name="clock" color="#1989fa" />
+          </template>
+        </van-cell>
+      </div>
+      
       <!-- 操作按钮 -->
       <div class="action-buttons">
         <van-button 
@@ -68,7 +99,7 @@
           :loading="saving"
           class="save-btn"
         >
-          {{ isEditing ? '更新笔记' : '保存笔记' }}
+          {{ timingEnabled ? (isEditing ? '更新定时笔记' : '设置定时发布') : (isEditing ? '更新笔记' : '保存笔记') }}
         </van-button>
       </div>
       
@@ -91,6 +122,17 @@
         :columns="categoryColumns"
         @confirm="onCategoryConfirm"
         @cancel="showCategoryPicker = false"
+      />
+    </van-popup>
+    
+    <!-- 时间选择器 -->
+    <van-popup v-model:show="showTimePicker" position="bottom">
+      <van-picker
+        title="选择发布时间"
+        :columns="timeColumns"
+        :default-index="getDefaultTimeIndex()"
+        @confirm="onTimeConfirm"
+        @cancel="showTimePicker = false"
       />
     </van-popup>
   </div>
@@ -118,8 +160,11 @@ const noteData = reactive({
 const saving = ref(false)
 const savingDraft = ref(false)
 const showCategoryPicker = ref(false)
+const showTimePicker = ref(false)
 const isEditing = ref(false)
 const hasDraft = ref(false)
+const timingEnabled = ref(false)
+const scheduledTime = ref(null)
 
 // 分类数据
 const categories = ref([
@@ -173,6 +218,30 @@ const saveNote = async () => {
     return
   }
   
+  // 如果启用了定时发布，检查时间是否已选择
+  if (timingEnabled.value && !scheduledTime.value) {
+    showSuccessToast('请选择发布时间')
+    return
+  }
+  
+  // 验证定时时间
+  if (timingEnabled.value && scheduledTime.value) {
+    const selectedDate = dayjs(scheduledTime.value)
+    const now = dayjs()
+    const minTime = now.add(2, 'hour')
+    const maxTime = now.add(10, 'day')
+    
+    if (selectedDate.isBefore(minTime)) {
+      showSuccessToast('发布时间必须在2小时之后')
+      return
+    }
+    
+    if (selectedDate.isAfter(maxTime)) {
+      showSuccessToast('发布时间不能超过10天')
+      return
+    }
+  }
+  
   saving.value = true
   
   try {
@@ -182,12 +251,21 @@ const saveNote = async () => {
     const now = new Date()
     if (isEditing.value) {
       noteData.updateTime = now
-      showSuccessToast('笔记更新成功')
+      if (timingEnabled.value) {
+        showSuccessToast(`笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}`)
+      } else {
+        showSuccessToast('笔记更新成功')
+      }
     } else {
       noteData.id = Date.now()
       noteData.createTime = now
       noteData.updateTime = now
-      showSuccessToast('笔记保存成功')
+      
+      if (timingEnabled.value) {
+        showSuccessToast(`笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}`)
+      } else {
+        showSuccessToast('笔记保存成功')
+      }
     }
     
     // 清除草稿
@@ -264,6 +342,126 @@ const checkDraft = () => {
 const onCategoryConfirm = ({ selectedOptions }) => {
   noteData.categoryId = selectedOptions[0].value
   showCategoryPicker.value = false
+}
+
+// 定时发布相关方法
+const onTimingToggle = (value) => {
+  if (!value) {
+    scheduledTime.value = null
+  } else {
+    // 启用定时发布时，设置默认时间为当前时间+2小时
+    const defaultTime = dayjs().add(2, 'hour')
+    scheduledTime.value = defaultTime.toDate()
+  }
+}
+
+const getTimeColumns = () => {
+  const now = dayjs()
+  const minTime = now.add(2, 'hour')
+  
+  // 生成日期选项
+  const dates = []
+  for (let i = 0; i <= 10; i++) {
+    const date = now.add(i, 'day')
+    dates.push({
+      text: date.format('MM月DD日'),
+      value: date.format('YYYY-MM-DD')
+    })
+  }
+  
+  // 生成小时选项
+  const hours = []
+  const isToday = true // 简化逻辑，始终基于今天的最小时间
+  const startHour = minTime.hour()
+  
+  for (let i = startHour; i < 24; i++) {
+    hours.push({
+      text: i.toString().padStart(2, '0') + '时',
+      value: i
+    })
+  }
+  
+  // 其他日期的小时（0-23）
+  for (let i = 0; i < startHour; i++) {
+    hours.push({
+      text: i.toString().padStart(2, '0') + '时',
+      value: i
+    })
+  }
+  
+  // 生成分钟选项
+  const minutes = []
+  for (let i = 0; i < 60; i += 15) {
+    minutes.push({
+      text: i.toString().padStart(2, '0') + '分',
+      value: i
+    })
+  }
+  
+  // 生成秒选项
+  const seconds = []
+  for (let i = 0; i < 60; i += 15) {
+    seconds.push({
+      text: i.toString().padStart(2, '0') + '秒',
+      value: i
+    })
+  }
+  
+  return [dates, hours, minutes, seconds]
+}
+
+const timeColumns = computed(() => getTimeColumns())
+
+const getDefaultTimeIndex = () => {
+  const now = dayjs()
+  const minTime = now.add(2, 'hour')
+  
+  // 默认选择今天
+  const dateIndex = 0
+  
+  // 默认选择最小可选小时
+  const hourIndex = 0
+  
+  // 默认选择最小可选分钟
+  const minuteIndex = 0
+  
+  // 默认选择0秒
+  const secondIndex = 0
+  
+  return [dateIndex, hourIndex, minuteIndex, secondIndex]
+}
+
+const onTimeConfirm = (event) => {
+  if (!event || !event.selectedOptions || event.selectedOptions.length < 4) {
+    showSuccessToast('请选择完整的时间')
+    return
+  }
+  
+  const [dateOption, hourOption, minuteOption, secondOption] = event.selectedOptions
+  
+  if (!dateOption || !hourOption || !minuteOption || !secondOption) {
+    showSuccessToast('请选择完整的时间')
+    return
+  }
+  
+  const selectedDateTime = dayjs(`${dateOption.value} ${hourOption.value.toString().padStart(2, '0')}:${minuteOption.value.toString().padStart(2, '0')}:${secondOption.value.toString().padStart(2, '0')}`)
+  
+  const now = dayjs()
+  const minTime = now.add(2, 'hour')
+  const maxTime = now.add(10, 'day')
+  
+  if (selectedDateTime.isBefore(minTime)) {
+    showSuccessToast('发布时间必须在2小时之后')
+    return
+  }
+  
+  if (selectedDateTime.isAfter(maxTime)) {
+    showSuccessToast('发布时间不能超过10天')
+    return
+  }
+  
+  scheduledTime.value = selectedDateTime.toDate()
+  showTimePicker.value = false
 }
 
 // 自动保存功能
@@ -349,6 +547,30 @@ onUnmounted(() => {
     height: 16px;
     border-radius: 50%;
     margin-right: var(--spacing-sm);
+  }
+}
+
+.timing-section {
+  margin-bottom: var(--spacing-lg);
+  
+  .timing-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    
+    .van-icon {
+      color: var(--primary-color);
+    }
+  }
+  
+  :deep(.van-cell) {
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-xs);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 }
 

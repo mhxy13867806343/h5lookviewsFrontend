@@ -29,15 +29,15 @@
 
       <!-- 用户统计 -->
       <div class="user-stats" v-if="userStore.isLoggedIn">
-        <div class="stat-item">
+        <div class="stat-item" @click="goToFollow('followers')">
           <div class="stat-number">1234</div>
           <div class="stat-label">粉丝</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item" @click="goToFollow('following')">
           <div class="stat-number">567</div>
           <div class="stat-label">关注</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item" @click="goToMyPosts">
           <div class="stat-number">89</div>
           <div class="stat-label">动态</div>
         </div>
@@ -195,6 +195,10 @@ const goToBlacklist = () => {
   router.push('/blacklist')
 }
 
+const goToFollow = (tab = 'following') => {
+  router.push(`/follow?tab=${tab}`)
+}
+
 const logout = () => {
   showConfirmDialog({
     title: '退出登录',
@@ -332,6 +336,18 @@ const saveTags = () => {
 
 .stat-item {
   text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 8px;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .stat-number {

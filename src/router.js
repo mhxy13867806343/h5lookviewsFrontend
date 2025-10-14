@@ -18,6 +18,7 @@ import RecentNotes from './pages/RecentNotes.vue'
 import Favorites from './pages/Favorites.vue'
 import Blacklist from './pages/Blacklist.vue'
 import EditProfile from './pages/EditProfile.vue'
+import Follow from './pages/Follow.vue'
 
 const routes = [
   {
@@ -123,6 +124,11 @@ const routes = [
         path: '/edit-profile',
         name: 'EditProfile',
         component: EditProfile
+      },
+      {
+        path: '/follow',
+        name: 'Follow',
+        component: Follow
       }
     ]
   },
