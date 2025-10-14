@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { showDialog, showSuccessToast, showFailToast } from 'vant'
+import { showSuccessToast, showFailToast } from 'vant'
 
 /**
  * 举报功能 Hook
@@ -7,7 +7,6 @@ import { showDialog, showSuccessToast, showFailToast } from 'vant'
  */
 export function useReport() {
   const showReportDialog = ref(false)
-  const showReportTypeDialog = ref(false)
   const reportLoading = ref(false)
   const currentReportTarget = ref(null)
 
@@ -22,51 +21,30 @@ export function useReport() {
     { label: '其他原因', value: 'other', description: '其他不当内容' }
   ]
 
-  // 显示举报确认对话框
+  // 显示举报对话框
   const showReportConfirm = (target, targetType = 'post') => {
     currentReportTarget.value = { ...target, type: targetType }
-    
-    showDialog({
-      title: '举报内容',
-      message: '请选择举报原因，我们会认真处理您的举报',
-      showCancelButton: true,
-      confirmButtonText: '选择原因',
-      cancelButtonText: '取消'
-    }).then(() => {
-      showReportTypeDialog.value = true
-    }).catch(() => {
-      // 用户取消
-    })
+    showReportDialog.value = true
   }
 
   // 提交举报
-  const submitReport = async (reportType, customReason = '') => {
-    if (!currentReportTarget.value) {
-      showFailToast('举报信息异常')
-      return
-    }
-
+  const submitReport = async (reportData) => {
     reportLoading.value = true
     
     try {
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const reportData = {
-        targetId: currentReportTarget.value.id,
-        targetType: currentReportTarget.value.type, // post, comment, user
-        reportType,
-        customReason,
-        reportTime: new Date().toISOString(),
-        reporterInfo: {
-          // 这里可以添加举报者信息（如果需要）
-        }
+      const fullReportData = {
+        ...reportData,
+        targetInfo: currentReportTarget.value,
+        reportTime: new Date().toISOString()
       }
       
-      console.log('举报数据:', reportData)
+      console.log('举报数据:', fullReportData)
       
       showSuccessToast('举报成功，感谢您的反馈')
-      showReportTypeDialog.value = false
+      showReportDialog.value = false
       currentReportTarget.value = null
       
       return true
@@ -103,7 +81,6 @@ export function useReport() {
   // 重置状态
   const resetReportState = () => {
     showReportDialog.value = false
-    showReportTypeDialog.value = false
     reportLoading.value = false
     currentReportTarget.value = null
   }
@@ -111,7 +88,6 @@ export function useReport() {
   return {
     // 状态
     showReportDialog,
-    showReportTypeDialog,
     reportLoading,
     currentReportTarget,
     

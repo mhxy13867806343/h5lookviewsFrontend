@@ -119,8 +119,8 @@
       v-model:show="showReportTypeDialog"
       :report-types="reportTypes"
       :loading="reportLoading"
-      @submit="handleReportSubmit"
-      @cancel="handleReportCancel"
+      @submit="submitReport"
+      @cancel="showReportTypeDialog = false"
     />
 =======
     <!-- 更多操作面板 -->
@@ -144,7 +144,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccessToast, showImagePreview, showDialog } from 'vant'
+import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog } from 'vant'
 import { useShare } from '../hooks/useShare.js'
 import { useReport } from '../hooks/useReport.js'
 import ReportDialog from '../components/ReportDialog.vue'
@@ -180,11 +180,11 @@ const {
 
 // 使用举报 hooks
 const {
-  showReportTypeDialog,
+  showReportDialog: showReportTypeDialog,
   reportTypes,
   reportLoading,
   submitReport,
-  reportPost,
+  showReportConfirm,
   resetReportState
 } = useReport()
 
@@ -357,29 +357,41 @@ const onActionSelect = (action) => {
   switch (action.name) {
     case '举报':
       if (currentNote.value) {
-        reportPost(currentNote.value)
+        showReportConfirm({
+          id: currentNote.value.id,
+          content: currentNote.value.content,
+          author: {
+            id: currentNote.value.userId,
+            nickname: currentNote.value.username
+          }
+        }, 'post')
       }
       break
     case '不感兴趣':
-      showSuccessToast('已标记为不感兴趣')
+      if (currentNote.value) {
+        showConfirmDialog({
+          title: '确认操作',
+          message: `确定要将"${currentNote.value.username}"的内容标记为不感兴趣吗？\n\n系统将减少推荐此类内容`,
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then(() => {
+          // 用户确认后，从列表中移除这条笔记
+          const noteIndex = notes.value.findIndex(note => note.id === currentNote.value.id)
+          if (noteIndex > -1) {
+            notes.value.splice(noteIndex, 1)
+            showSuccessToast(`已标记为不感兴趣，将减少推荐此类内容`)
+          }
+        }).catch(() => {
+          // 用户取消操作
+        })
+      }
       break
     default:
       break
   }
 }
 
-// 处理举报提交
-const handleReportSubmit = async (reportData) => {
-  const success = await submitReport(reportData.type, reportData.customReason)
-  if (success) {
-    resetReportState()
-  }
-}
 
-// 处理举报取消
-const handleReportCancel = () => {
-  resetReportState()
-}
 
 // 预览图片
 const previewImage = (images, startPosition) => {

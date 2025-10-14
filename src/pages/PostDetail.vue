@@ -210,6 +210,15 @@
       @select="onShareSelect"
       @cancel="onShareCancel"
     />
+
+    <!-- 举报对话框 -->
+    <ReportDialog 
+      v-model:show="showReportDialog" 
+      :report-types="reportTypes"
+      :loading="reportLoading"
+      @submit="submitReport"
+      @cancel="showReportDialog = false"
+    />
   </div>
 </template>
 
@@ -218,8 +227,10 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
+import { useReport } from '../hooks/useReport.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
+import ReportDialog from '../components/ReportDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -247,6 +258,15 @@ const {
   onShareCancel,
   openShareSheet
 } = useShare()
+
+// 使用举报 hooks
+const {
+  showReportDialog,
+  showReportConfirm,
+  reportTypes,
+  reportLoading,
+  submitReport
+} = useReport()
 
 // 计算属性
 const isAuthor = computed(() => {
@@ -455,7 +475,13 @@ const onActionSelect = (action) => {
       })
       break
     case 'report':
-      showToast('举报功能开发中')
+      if (postInfo.value) {
+        showReportConfirm({
+          id: postInfo.value.id,
+          content: postInfo.value.content,
+          author: postInfo.value.author
+        }, 'post')
+      }
       break
     case 'block':
       showConfirmDialog({
