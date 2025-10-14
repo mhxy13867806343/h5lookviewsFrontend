@@ -17,6 +17,7 @@ import AllNotes from './pages/AllNotes.vue'
 import RecentNotes from './pages/RecentNotes.vue'
 import Favorites from './pages/Favorites.vue'
 import Blacklist from './pages/Blacklist.vue'
+import EditProfile from './pages/EditProfile.vue'
 
 const routes = [
   {
@@ -117,6 +118,11 @@ const routes = [
         path: '/blacklist',
         name: 'Blacklist',
         component: Blacklist
+      },
+      {
+        path: '/edit-profile',
+        name: 'EditProfile',
+        component: EditProfile
       }
     ]
   },

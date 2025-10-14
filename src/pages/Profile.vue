@@ -73,21 +73,7 @@
       </div>
     </div>
 
-    <!-- 编辑资料弹窗 -->
-    <van-popup v-model:show="showEditProfile" position="bottom" :style="{ height: '80%' }">
-      <div class="edit-profile">
-        <van-nav-bar title="编辑资料" left-text="取消" right-text="保存" 
-          @click-left="showEditProfile = false" @click-right="saveProfile" />
-        
-        <div class="edit-form">
-          <van-cell-group>
-            <van-field v-model="editForm.nickname" label="昵称" placeholder="请输入昵称" />
-            <van-field v-model="editForm.signature" label="个性签名" placeholder="请输入个性签名" type="textarea" rows="3" />
-            <van-field v-model="editForm.location" label="所在地" placeholder="请输入所在地" />
-          </van-cell-group>
-        </div>
-      </div>
-    </van-popup>
+
 
     <!-- 编辑标签弹窗 -->
     <van-popup v-model:show="showEditTags" position="bottom" :style="{ height: '80%' }">
@@ -158,15 +144,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 弹窗状态
-const showEditProfile = ref(false)
 const showEditTags = ref(false)
-
-// 编辑资料表单
-const editForm = ref({
-  nickname: '',
-  signature: '',
-  location: ''
-})
 
 // 标签相关数据
 const userTags = ref(['热爱生活', '美食达人', '旅行家', '读书人'])
@@ -232,23 +210,10 @@ const logout = () => {
 
 // 编辑资料相关方法
 const editProfile = () => {
-  editForm.value = {
-    nickname: userStore.user?.nickname,
-    signature: userStore.user?.signature || '',
-    location: userStore.user?.location || ''
-  }
-  showEditProfile.value = true
+  router.push('/edit-profile')
 }
 
-const saveProfile = () => {
-  // 保存个人资料
-  userStore.user.nickname = editForm.value.nickname
-  userStore.user.signature = editForm.value.signature
-  userStore.user.location = editForm.value.location
-  
-  showEditProfile.value = false
-  showToast('保存成功')
-}
+
 
 // 标签相关方法
 const editTags = () => {
@@ -393,15 +358,7 @@ const saveTags = () => {
   }
 }
 
-/* 编辑资料样式 */
-.edit-profile {
-  height: 100%;
-  background: #f7f8fa;
-}
 
-.edit-form {
-  padding: 16px;
-}
 
 /* 标签编辑样式 */
 .edit-tags {

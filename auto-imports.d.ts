@@ -58,6 +58,7 @@ declare global {
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
   const showDialog: typeof import('vant/es')['showDialog']
+  const showImagePreview: typeof import('vant/es')['showImagePreview']
   const showToast: typeof import('vant/es')['showToast']
   const storeToRefs: typeof import('pinia')['storeToRefs']
   const toRaw: typeof import('vue')['toRaw']
