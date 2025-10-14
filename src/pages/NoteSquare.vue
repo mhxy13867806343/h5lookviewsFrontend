@@ -121,7 +121,7 @@
     </div>
     
     <!-- 评论弹窗 -->
-    <van-popup v-model:show="showCommentPopup" position="bottom" :style="{ height: '60%' }">
+    <van-popup v-model:show="showCommentPopup" position="bottom" :style="{ height: '70%' }">
       <div class="comment-popup">
         <van-nav-bar 
           title="评论" 
@@ -129,53 +129,12 @@
           @click-left="showCommentPopup = false"
         />
         
-        <div class="comments-list">
-          <div v-for="comment in currentComments" :key="comment.id" class="comment-item">
-            <van-image
-              :src="comment.user.avatar"
-              round
-              width="32"
-              height="32"
-              class="comment-avatar"
-            >
-              <template #error>
-                <van-icon name="user-circle-o" size="32" />
-              </template>
-            </van-image>
-            <div class="comment-content">
-              <div class="comment-user">{{ comment.user.name }}</div>
-              <div class="comment-text">{{ comment.content }}</div>
-              <div class="comment-time">{{ formatTime(comment.createTime) }}</div>
-            </div>
-            <div class="comment-actions">
-              <van-icon 
-                :name="comment.isLiked ? 'good-job' : 'good-job-o'"
-                :color="comment.isLiked ? '#ee0a24' : ''"
-                @click="toggleCommentLike(comment)"
-              />
-              <span>{{ comment.likeCount || 0 }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 评论输入 -->
-        <div class="comment-input">
-          <van-field
-            v-model="commentText"
-            placeholder="写下你的评论..."
-            type="textarea"
-            autosize
-            maxlength="500"
-          />
-          <van-button 
-            type="primary" 
-            size="small"
-            @click="submitComment"
-            :disabled="!commentText.trim()"
-          >
-            发送
-          </van-button>
-        </div>
+        <CommentComponent
+          v-if="currentNote"
+          :target-id="currentNote.id"
+          target-type="note"
+          @comment-count-change="handleCommentCountChange"
+        />
       </div>
     </van-popup>
 
@@ -195,6 +154,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview } from 'vant'
 import { useShare } from '../hooks/useShare.js'
+import { useComment } from '../hooks/useComment.js'
+import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -203,7 +164,6 @@ const router = useRouter()
 const activeCategory = ref('all')
 const loading = ref(false)
 const showCommentPopup = ref(false)
-const commentText = ref('')
 const currentNote = ref(null)
 
 // 使用分享 hooks
@@ -214,6 +174,9 @@ const {
   onShareCancel,
   shareNote: shareNoteWithHook
 } = useShare()
+
+// 使用评论 hooks
+const { comments } = useComment()
 
 // 模拟笔记数据
 const notes = ref([
@@ -319,35 +282,7 @@ const notes = ref([
   }
 ])
 
-// 模拟评论数据
-const comments = ref([
-  {
-    id: 1,
-    noteId: 1,
-    content: '写得很好，Vue3确实比Vue2好用很多！',
-    user: {
-      id: 10,
-      name: '前端小白',
-      avatar: ''
-    },
-    createTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    likeCount: 3,
-    isLiked: false
-  },
-  {
-    id: 2,
-    noteId: 1,
-    content: '感谢分享，对我很有帮助，已收藏！',
-    user: {
-      id: 11,
-      name: '学习者',
-      avatar: ''
-    },
-    createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    likeCount: 1,
-    isLiked: true
-  }
-])
+
 
 // 计算属性
 const filteredNotes = computed(() => {
@@ -364,10 +299,7 @@ const filteredNotes = computed(() => {
   return notes.value.filter(note => note.category === categoryMap[activeCategory.value])
 })
 
-const currentComments = computed(() => {
-  if (!currentNote.value) return []
-  return comments.value.filter(comment => comment.noteId === currentNote.value.id)
-})
+
 
 // 方法
 const handleBack = () => {
@@ -425,33 +357,13 @@ const showComments = (note) => {
   showCommentPopup.value = true
 }
 
-const toggleCommentLike = (comment) => {
-  comment.isLiked = !comment.isLiked
-  comment.likeCount += comment.isLiked ? 1 : -1
+const handleCommentCountChange = (newCount) => {
+  if (currentNote.value) {
+    currentNote.value.commentCount = newCount
+  }
 }
 
-const submitComment = () => {
-  if (!commentText.value.trim()) return
-  
-  const newComment = {
-    id: Date.now(),
-    noteId: currentNote.value.id,
-    content: commentText.value,
-    user: {
-      id: 999,
-      name: '我',
-      avatar: ''
-    },
-    createTime: new Date(),
-    likeCount: 0,
-    isLiked: false
-  }
-  
-  comments.value.unshift(newComment)
-  currentNote.value.commentCount += 1
-  commentText.value = ''
-  showSuccessToast('评论成功')
-}
+
 
 const viewNoteDetail = (note) => {
   router.push(`/note/${note.id}`)
@@ -645,71 +557,5 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  
-  .comments-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-md);
-  }
-  
-  .comment-item {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-    
-    .comment-avatar {
-      flex-shrink: 0;
-    }
-    
-    .comment-content {
-      flex: 1;
-      
-      .comment-user {
-        font-size: var(--font-size-sm);
-        font-weight: 500;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-      }
-      
-      .comment-text {
-        font-size: var(--font-size-md);
-        color: var(--text-primary);
-        line-height: var(--line-height-relaxed);
-        margin-bottom: var(--spacing-xs);
-      }
-      
-      .comment-time {
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-      }
-    }
-    
-    .comment-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
-      
-      .van-icon {
-        cursor: pointer;
-      }
-    }
-  }
-  
-  .comment-input {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
-    background: var(--background-secondary);
-    
-    :deep(.van-field) {
-      flex: 1;
-      background: var(--background-primary);
-      border-radius: var(--border-radius-sm);
-    }
-  }
 }
 </style>

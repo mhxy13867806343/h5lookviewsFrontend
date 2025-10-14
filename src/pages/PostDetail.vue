@@ -87,7 +87,7 @@
         <van-button 
           type="default" 
           icon="comment-o"
-          @click="focusCommentInput"
+          @click="() => {}"
         >
           评论
         </van-button>
@@ -170,17 +170,13 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const postId = route.params.id
-const commentInputRef = ref(null)
 
 // 响应式数据
 const postInfo = ref(null)
-const comments = ref([])
-const commentText = ref('')
 const isFollowed = ref(false)
 const followLoading = ref(false)
 const likeLoading = ref(false)
 const collectLoading = ref(false)
-const commentLoading = ref(false)
 const showActionSheet = ref(false)
 
 // 使用分享 hooks
@@ -334,73 +330,7 @@ const handleShare = () => {
   }
 }
 
-const focusCommentInput = () => {
-  nextTick(() => {
-    commentInputRef.value?.focus()
-  })
-}
 
-const submitComment = async () => {
-  if (!userStore.isLoggedIn) {
-    router.push('/login')
-    return
-  }
-  
-  if (!commentText.value.trim()) {
-    showToast('请输入评论内容')
-    return
-  }
-  
-  commentLoading.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const newComment = {
-      id: Date.now(),
-      author: {
-        id: userStore.user.id,
-        nickname: userStore.user.nickname,
-        avatar: userStore.user.avatar
-      },
-      content: commentText.value.trim(),
-      createTime: new Date(),
-      likesCount: 0,
-      isLiked: false,
-      replies: []
-    }
-    
-    comments.value.unshift(newComment)
-    postInfo.value.commentsCount = (postInfo.value.commentsCount || 0) + 1
-    commentText.value = ''
-    
-    showSuccessToast('评论成功')
-  } finally {
-    commentLoading.value = false
-  }
-}
-
-const likeComment = async (comment) => {
-  if (!userStore.isLoggedIn) {
-    router.push('/login')
-    return
-  }
-  
-  try {
-    if (comment.isLiked) {
-      comment.isLiked = false
-      comment.likesCount = Math.max(0, comment.likesCount - 1)
-    } else {
-      comment.isLiked = true
-      comment.likesCount = (comment.likesCount || 0) + 1
-    }
-  } catch (error) {
-    showToast('操作失败')
-  }
-}
-
-const replyComment = (comment) => {
-  showToast('回复功能开发中')
-}
 
 const onActionSelect = (action) => {
   showActionSheet.value = false
@@ -469,48 +399,7 @@ const initPostData = () => {
     isCollected: false
   }
   
-  // 模拟评论数据
-  comments.value = [
-    {
-      id: 1,
-      author: {
-        id: 'user456',
-        nickname: '评论用户A',
-        avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-      },
-      content: '很棒的分享！这个地方确实很美，我也想去看看。',
-      createTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      likesCount: 5,
-      isLiked: false,
-      replies: [
-        {
-          id: 11,
-          author: {
-            id: 'user789',
-            nickname: '用户B'
-          },
-          replyTo: {
-            nickname: '评论用户A'
-          },
-          content: '我也想去！',
-          createTime: new Date(Date.now() - 30 * 60 * 1000)
-        }
-      ]
-    },
-    {
-      id: 2,
-      author: {
-        id: 'user789',
-        nickname: '评论用户B',
-        avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-      },
-      content: '照片拍得真好，技术不错！',
-      createTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
-      likesCount: 3,
-      isLiked: true,
-      replies: []
-    }
-  ]
+
   
   // 模拟关注状态
   isFollowed.value = Math.random() > 0.5
@@ -637,128 +526,5 @@ onMounted(() => {
   }
 }
 
-.comments-section {
-  background: var(--background-secondary);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  
-  .comments-header {
-    margin-bottom: var(--spacing-md);
-    
-    h3 {
-      margin: 0;
-      color: var(--text-primary);
-      font-size: var(--font-size-lg);
-    }
-  }
-  
-  .comment-item {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-    
-    .comment-content {
-      flex: 1;
-      
-      .comment-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-xs);
-        
-        .comment-author {
-          font-weight: 500;
-          color: var(--text-primary);
-          font-size: var(--font-size-sm);
-        }
-        
-        .comment-time {
-          color: var(--text-secondary);
-          font-size: var(--font-size-xs);
-        }
-      }
-      
-      .comment-text {
-        margin: 0 0 var(--spacing-sm) 0;
-        color: var(--text-primary);
-        line-height: 1.4;
-      }
-      
-      .comment-actions {
-        display: flex;
-        gap: var(--spacing-md);
-        
-        .comment-like, .comment-reply {
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-xs);
-          color: var(--text-secondary);
-          font-size: var(--font-size-xs);
-          cursor: pointer;
-          
-          &.liked {
-            color: var(--primary-color);
-          }
-          
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
-      
-      .replies-list {
-        margin-top: var(--spacing-sm);
-        padding-left: var(--spacing-md);
-        border-left: 2px solid var(--border-color);
-        
-        .reply-item {
-          font-size: var(--font-size-xs);
-          color: var(--text-secondary);
-          margin-bottom: var(--spacing-xs);
-          line-height: 1.4;
-          
-          .reply-author {
-            color: var(--primary-color);
-            font-weight: 500;
-          }
-          
-          .reply-target {
-            color: var(--text-secondary);
-          }
-          
-          .reply-content {
-            color: var(--text-primary);
-          }
-          
-          .reply-time {
-            margin-left: var(--spacing-sm);
-          }
-        }
-      }
-    }
-  }
-}
 
-.comment-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--background-secondary);
-  border-top: 1px solid var(--border-color);
-  padding: var(--spacing-sm);
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: flex-end;
-  
-  .van-field {
-    flex: 1;
-    background: var(--background-primary);
-    border-radius: var(--border-radius-md);
-  }
-}
 </style>

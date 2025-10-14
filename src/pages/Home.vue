@@ -138,6 +138,24 @@
       @submit="handleReportSubmit"
       @cancel="handleReportCancel"
     />
+
+    <!-- 评论弹窗 -->
+    <van-popup v-model:show="showCommentPopup" position="bottom" :style="{ height: '70%' }">
+      <div class="comment-popup">
+        <van-nav-bar 
+          title="评论" 
+          left-text="取消" 
+          @click-left="showCommentPopup = false"
+        />
+        
+        <CommentComponent
+          v-if="currentNote"
+          :target-id="currentNote.id"
+          target-type="post"
+          @comment-count-change="handleCommentCountChange"
+        />
+      </div>
+    </van-popup>
   </div>
 </template>
 
@@ -147,7 +165,9 @@ import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog } from 'vant'
 import { useShare } from '../hooks/useShare.js'
 import { useReport } from '../hooks/useReport.js'
+import { useComment } from '../hooks/useComment.js'
 import ReportDialog from '../components/ReportDialog.vue'
+import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
 
 // 注册组件
@@ -163,6 +183,7 @@ const searchValue = ref('')
 const showSearch = ref(false)
 const loading = ref(false)
 const showActionSheet = ref(false)
+const showCommentPopup = ref(false)
 const currentNote = ref(null)
 
 // 长按相关
@@ -187,6 +208,9 @@ const {
   showReportConfirm,
   resetReportState
 } = useReport()
+
+// 使用评论 hooks
+const { comments } = useComment()
 
 // 模拟笔记数据
 const notes = ref([
@@ -331,7 +355,15 @@ const viewNote = (note) => {
 
 // 显示评论
 const showComments = (note) => {
-  showSuccessToast(`查看评论: ${note.commentCount}条`)
+  currentNote.value = note
+  showCommentPopup.value = true
+}
+
+// 处理评论数量变化
+const handleCommentCountChange = (newCount) => {
+  if (currentNote.value) {
+    currentNote.value.commentCount = newCount
+  }
 }
 
 // 分享动态 - 使用 hooks 中的方法
@@ -529,5 +561,11 @@ onMounted(() => {
 .loading-more {
   text-align: center;
   padding: var(--spacing-lg);
+}
+
+.comment-popup {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>

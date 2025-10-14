@@ -242,50 +242,18 @@
     <!-- 评论弹窗 -->
     <van-popup v-model:show="showCommentPopup" position="bottom" :style="{ height: '70%' }">
       <div class="comment-popup">
-        <div class="comment-header">
-          <span>评论</span>
-          <van-icon name="cross" @click="showCommentPopup = false" />
-        </div>
+        <van-nav-bar 
+          title="评论" 
+          left-text="取消" 
+          @click-left="showCommentPopup = false"
+        />
         
-        <div class="comments-list">
-          <div v-for="comment in currentComments" :key="comment.id" class="comment-item">
-            <van-image
-              :src="comment.avatar"
-              round
-              width="32"
-              height="32"
-              fit="cover"
-            />
-            <div class="comment-content">
-              <div class="comment-user">{{ comment.nickname }}</div>
-              <div class="comment-text">{{ comment.content }}</div>
-              <div class="comment-meta">
-                <span>{{ formatTime(comment.createTime) }}</span>
-                <span @click="likeComment(comment)" :class="{ 'liked': comment.isLiked }">
-                  <van-icon name="good-job-o" />
-                  {{ comment.likesCount || '' }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="comment-input">
-          <van-field
-            v-model="commentText"
-            placeholder="说点什么..."
-            type="textarea"
-            rows="2"
-          />
-          <van-button 
-            type="primary" 
-            size="small"
-            @click="submitComment"
-            :disabled="!commentText.trim()"
-          >
-            发送
-          </van-button>
-        </div>
+        <CommentComponent
+          v-if="currentPost"
+          :target-id="currentPost.id"
+          target-type="post"
+          @comment-count-change="handleCommentCountChange"
+        />
       </div>
     </van-popup>
   </div>
@@ -296,6 +264,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
+import { useComment } from '../hooks/useComment.js'
+import CommentComponent from '../components/CommentComponent.vue'
 import { showSuccessToast, showConfirmDialog, showImagePreview } from 'vant'
 import dayjs from 'dayjs'
 
@@ -321,8 +291,6 @@ const hasMorePosts = ref(true)
 const loadingPosts = ref(false)
 const showActionSheet = ref(false)
 const showCommentPopup = ref(false)
-const currentComments = ref([])
-const commentText = ref('')
 const currentPost = ref(null)
 
 // 操作菜单
@@ -429,8 +397,13 @@ const handleComment = (post) => {
   }
   
   currentPost.value = post
-  loadComments(post.id)
   showCommentPopup.value = true
+}
+
+const handleCommentCountChange = (newCount) => {
+  if (currentPost.value) {
+    currentPost.value.commentsCount = newCount
+  }
 }
 
 const handleCollect = async (post) => {
@@ -496,74 +469,7 @@ const loadMorePosts = async () => {
   }
 }
 
-const loadComments = async (postId) => {
-  // 模拟加载评论数据
-  currentComments.value = [
-    {
-      id: 1,
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      nickname: '用户A',
-      content: '很棒的分享！',
-      createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      likesCount: 5,
-      isLiked: false
-    },
-    {
-      id: 2,
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      nickname: '用户B',
-      content: '学到了很多，谢谢分享',
-      createTime: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      likesCount: 3,
-      isLiked: true
-    }
-  ]
-}
 
-const submitComment = async () => {
-  if (!commentText.value.trim()) return
-  
-  try {
-    // 模拟发送评论
-    const newComment = {
-      id: Date.now(),
-      avatar: userStore.user&&userStore.user.avatar,
-      nickname: userStore.user&&userStore.user.nickname,
-      content: commentText.value,
-      createTime: new Date(),
-      likesCount: 0,
-      isLiked: false
-    }
-    
-    currentComments.value.unshift(newComment)
-    commentText.value = ''
-    
-    // 更新动态的评论数
-    if (currentPost.value) {
-      currentPost.value.commentsCount = (currentPost.value.commentsCount || 0) + 1
-    }
-    
-    showSuccessToast('评论成功')
-  } catch (error) {
-    showSuccessToast('评论失败')
-  }
-}
-
-const likeComment = async (comment) => {
-  if (!userStore.isLoggedIn) return
-  
-  try {
-    if (comment.isLiked) {
-      comment.isLiked = false
-      comment.likesCount = Math.max(0, comment.likesCount - 1)
-    } else {
-      comment.isLiked = true
-      comment.likesCount = (comment.likesCount || 0) + 1
-    }
-  } catch (error) {
-    showSuccessToast('操作失败')
-  }
-}
 
 const viewCollection = (item) => {
   showSuccessToast('查看收藏详情')
@@ -978,66 +884,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   
-  .comment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--border-color);
-    font-weight: 600;
-  }
-  
-  .comments-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-sm);
-    
-    .comment-item {
-      display: flex;
-      gap: var(--spacing-sm);
-      margin-bottom: var(--spacing-md);
-      
-      .comment-content {
-        flex: 1;
-        
-        .comment-user {
-          font-size: var(--font-size-sm);
-          color: var(--text-primary);
-          font-weight: 500;
-          margin-bottom: var(--spacing-xs);
-        }
-        
-        .comment-text {
-          color: var(--text-primary);
-          line-height: 1.4;
-          margin-bottom: var(--spacing-xs);
-        }
-        
-        .comment-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: var(--font-size-xs);
-          color: var(--text-secondary);
-          
-          span.liked {
-            color: #ff976a;
-          }
-        }
-      }
-    }
-  }
-  
-  .comment-input {
-    display: flex;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
-    align-items: flex-end;
-    
-    .van-field {
-      flex: 1;
-    }
-  }
+
 }
 </style>
