@@ -67,6 +67,7 @@
           <van-cell title="我的笔记" icon="notes-o" is-link @click="goToMyNotes" />
           <van-cell title="账号与安全" icon="shield-o" is-link />
           <van-cell title="隐私设置" icon="eye-o" is-link />
+          <van-cell title="拉黑名单" icon="delete-o" is-link @click="goToBlacklist" />
           <van-cell title="退出登录" icon="sign" is-link @click="logout" />
         </van-cell-group>
       </div>
@@ -210,6 +211,10 @@ const goToMyPosts = () => {
 const goToMyNotes = () => {
   // 模拟跳转到笔记详情页
   router.push('/note/demo-note-1')
+}
+
+const goToBlacklist = () => {
+  router.push('/blacklist')
 }
 
 const logout = () => {

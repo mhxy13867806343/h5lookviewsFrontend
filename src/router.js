@@ -16,6 +16,7 @@ import ChatList from './pages/ChatList.vue'
 import AllNotes from './pages/AllNotes.vue'
 import RecentNotes from './pages/RecentNotes.vue'
 import Favorites from './pages/Favorites.vue'
+import Blacklist from './pages/Blacklist.vue'
 
 const routes = [
   {
@@ -111,6 +112,11 @@ const routes = [
         path: '/favorites',
         name: 'Favorites',
         component: Favorites
+      },
+      {
+        path: '/blacklist',
+        name: 'Blacklist',
+        component: Blacklist
       }
     ]
   },

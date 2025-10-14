@@ -1,5 +1,6 @@
 import { ref, reactive } from 'vue'
 import { showConfirmDialog, showSuccessToast, showFailToast } from 'vant'
+import dayjs from 'dayjs'
 
 /**
  * 拉黑功能 hooks
@@ -8,6 +9,8 @@ export function useBlock() {
   // 响应式数据
   const blockLoading = ref(false)
   const blockedUsers = ref(new Set()) // 已拉黑用户ID集合
+  const blacklist = ref([]) // 黑名单详细信息列表
+  const isLoading = ref(false)
   
   // 拉黑状态
   const blockState = reactive({
@@ -83,6 +86,17 @@ export function useBlock() {
       // 添加到黑名单
       blockedUsers.value.add(user.id)
       
+      // 添加到详细黑名单列表
+      const blacklistItem = {
+        id: user.id,
+        nickname: user.nickname,
+        avatar: user.avatar || 'https://img.yzcdn.cn/vant/cat.jpeg',
+        signature: user.signature || '',
+        blockTime: new Date(),
+        blockContext: context
+      }
+      blacklist.value.unshift(blacklistItem) // 新拉黑的用户放在最前面
+      
       // 可以在这里调用实际的API
       // await api.blockUser(user.id, context)
       
@@ -112,30 +126,98 @@ export function useBlock() {
     }
   }
 
+
+
   /**
-   * 取消拉黑（解除拉黑）
-   * @param {string} userId - 用户ID
+   * 获取黑名单列表
+   * @returns {Array} 黑名单用户ID数组
    */
-  const unblockUser = async (userId) => {
-    if (!userId) return
+  const getBlockedUsers = () => {
+    return Array.from(blockedUsers.value)
+  }
+
+  /**
+   * 获取黑名单用户详细信息
+   */
+  const getBlacklistUsers = async () => {
+    isLoading.value = true
+    
+    try {
+      // 模拟API调用获取黑名单详细信息
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // 模拟黑名单数据
+      const mockBlacklistData = [
+        {
+          id: 'user001',
+          nickname: '烦人的用户',
+          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
+          signature: '总是发一些无聊的内容',
+          blockTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7天前
+          blockContext: 'post'
+        },
+        {
+          id: 'user002', 
+          nickname: '广告机器人',
+          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
+          signature: '专门发广告的账号',
+          blockTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3天前
+          blockContext: 'user'
+        },
+        {
+          id: 'user003',
+          nickname: '恶意评论者',
+          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
+          signature: '喜欢恶意评论别人',
+          blockTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1天前
+          blockContext: 'note'
+        }
+      ]
+      
+      // 更新黑名单数据
+      blacklist.value = mockBlacklistData
+      
+      // 同步更新 blockedUsers Set
+      blockedUsers.value.clear()
+      mockBlacklistData.forEach(user => {
+        blockedUsers.value.add(user.id)
+      })
+      
+      return blacklist.value
+    } catch (error) {
+      console.error('获取黑名单失败:', error)
+      showFailToast('获取黑名单失败')
+      return []
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * 从黑名单中移除用户（解除拉黑）
+   * @param {Object} user - 用户信息对象
+   */
+  const unblockUser = async (user) => {
+    if (!user || !user.id) {
+      showFailToast('用户信息不完整')
+      return { success: false }
+    }
 
     try {
-      blockLoading.value = true
-      
       // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(resolve => setTimeout(resolve, 500))
       
       // 从黑名单中移除
-      blockedUsers.value.delete(userId)
+      blockedUsers.value.delete(user.id)
+      blacklist.value = blacklist.value.filter(item => item.id !== user.id)
       
       // 可以在这里调用实际的API
-      // await api.unblockUser(userId)
-      
-      showSuccessToast('已解除拉黑')
+      // await api.unblockUser(user.id)
       
       return {
         success: true,
-        userId
+        userId: user.id,
+        user
       }
     } catch (error) {
       console.error('解除拉黑失败:', error)
@@ -144,19 +226,9 @@ export function useBlock() {
       return {
         success: false,
         error: error.message,
-        userId
+        userId: user.id
       }
-    } finally {
-      blockLoading.value = false
     }
-  }
-
-  /**
-   * 获取黑名单列表
-   * @returns {Array} 黑名单用户ID数组
-   */
-  const getBlockedUsers = () => {
-    return Array.from(blockedUsers.value)
   }
 
   /**
@@ -215,8 +287,10 @@ export function useBlock() {
 
   return {
     // 响应式数据
-    blockLoading: blockLoading,
-    blockedUsers: blockedUsers,
+    blockLoading,
+    blockedUsers,
+    blacklist,
+    isLoading,
     blockState,
     
     // 方法
@@ -225,6 +299,7 @@ export function useBlock() {
     unblockUser,
     isUserBlocked,
     getBlockedUsers,
+    getBlacklistUsers,
     blockMultipleUsers,
     resetBlockState,
     clearBlockedUsers
