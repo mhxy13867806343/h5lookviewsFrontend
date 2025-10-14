@@ -113,7 +113,7 @@
         <van-button 
           type="default" 
           icon="comment-o"
-          @click="focusCommentInput"
+          @click="() => {}"
         >
           评论
         </van-button>
@@ -165,75 +165,20 @@
       </div>
 
       <!-- 评论区域 -->
-      <div class="comments-section">
-        <div class="comments-header">
-          <h3>评论 ({{ comments.length }})</h3>
-        </div>
-        
-        <div class="comments-list">
-          <div 
-            v-for="comment in comments" 
-            :key="comment.id" 
-            class="comment-item"
-          >
-            <van-image
-              :src="comment.author.avatar"
-              round
-              width="32"
-              height="32"
-              fit="cover"
-              @click="goToUserProfile(comment.author.id)"
-            />
-            <div class="comment-content">
-              <div class="comment-header">
-                <span class="comment-author">{{ comment.author.nickname }}</span>
-                <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
-              </div>
-              <p class="comment-text">{{ comment.content }}</p>
-              <div class="comment-actions">
-                <span 
-                  class="comment-like"
-                  :class="{ 'liked': comment.isLiked }"
-                  @click="likeComment(comment)"
-                >
-                  <van-icon name="good-job-o" />
-                  {{ comment.likesCount || '' }}
-                </span>
-                <span class="comment-reply" @click="replyComment(comment)">
-                  回复
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 空状态 -->
-        <van-empty v-if="!comments.length" description="暂无评论，快来抢沙发吧~" />
-      </div>
+      <CommentComponent
+        :target-id="noteId"
+        target-type="note"
+        :comment-count="noteInfo?.commentsCount || 0"
+        :comments="commentList"
+        :loading="commentLoading"
+        @submit-comment="submitCommentHook"
+        @like-comment="likeCommentHook"
+        @delete-comment="deleteCommentHook"
+        @load-more-replies="loadMoreRepliesHook"
+      />
     </div>
 
-    <!-- 评论输入框 -->
-    <div class="comment-input-bar">
-      <van-field
-        ref="commentInputRef"
-        v-model="commentText"
-        placeholder="写下你的想法..."
-        type="textarea"
-        rows="1"
-        autosize
-        maxlength="200"
-        show-word-limit
-      />
-      <van-button 
-        type="primary" 
-        size="small"
-        @click="submitComment"
-        :disabled="!commentText.trim()"
-        :loading="commentLoading"
-      >
-        发送
-      </van-button>
-    </div>
+
 
     <!-- 操作菜单 -->
     <van-action-sheet
@@ -268,27 +213,25 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
 import { useReport } from '../hooks/useReport.js'
+import { useComment } from '../hooks/useComment.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
+import CommentComponent from '../components/CommentComponent.vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
 const noteId = route.params.id
-const commentInputRef = ref(null)
 
 // 响应式数据
 const noteInfo = ref(null)
 const relatedNotes = ref([])
-const comments = ref([])
-const commentText = ref('')
 const isFollowed = ref(false)
 const followLoading = ref(false)
 const likeLoading = ref(false)
 const collectLoading = ref(false)
-const commentLoading = ref(false)
 const showActionSheet = ref(false)
 
 // 使用分享 hooks
@@ -308,6 +251,17 @@ const {
   reportLoading,
   submitReport
 } = useReport()
+
+// 使用评论 hooks
+const {
+  comments: commentList,
+  loading: commentLoading,
+  submitComment: submitCommentHook,
+  likeComment: likeCommentHook,
+  deleteComment: deleteCommentHook,
+  loadMoreReplies: loadMoreRepliesHook,
+  getComments
+} = useComment('note', noteId)
 
 // 计算属性
 const isAuthor = computed(() => {
@@ -435,72 +389,7 @@ const handleShare = () => {
   }
 }
 
-const focusCommentInput = () => {
-  nextTick(() => {
-    commentInputRef.value?.focus()
-  })
-}
 
-const submitComment = async () => {
-  if (!userStore.isLoggedIn) {
-    router.push('/login')
-    return
-  }
-  
-  if (!commentText.value.trim()) {
-    showToast('请输入评论内容')
-    return
-  }
-  
-  commentLoading.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const newComment = {
-      id: Date.now(),
-      author: {
-        id: userStore.user.id,
-        nickname: userStore.user.nickname,
-        avatar: userStore.user.avatar
-      },
-      content: commentText.value.trim(),
-      createTime: new Date(),
-      likesCount: 0,
-      isLiked: false
-    }
-    
-    comments.value.unshift(newComment)
-    noteInfo.value.commentsCount = (noteInfo.value.commentsCount || 0) + 1
-    commentText.value = ''
-    
-    showSuccessToast('评论成功')
-  } finally {
-    commentLoading.value = false
-  }
-}
-
-const likeComment = async (comment) => {
-  if (!userStore.isLoggedIn) {
-    router.push('/login')
-    return
-  }
-  
-  try {
-    if (comment.isLiked) {
-      comment.isLiked = false
-      comment.likesCount = Math.max(0, comment.likesCount - 1)
-    } else {
-      comment.isLiked = true
-      comment.likesCount = (comment.likesCount || 0) + 1
-    }
-  } catch (error) {
-    showToast('操作失败')
-  }
-}
-
-const replyComment = (comment) => {
-  showToast('回复功能开发中')
-}
 
 const onActionSelect = (action) => {
   showActionSheet.value = false
@@ -620,33 +509,7 @@ const initNoteData = () => {
     }
   ]
   
-  // 模拟评论数据
-  comments.value = [
-    {
-      id: 1,
-      author: {
-        id: 'user456',
-        nickname: '美食爱好者',
-        avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-      },
-      content: '太棒了！按照这个方法做出来的意大利面真的很好吃，谢谢分享！',
-      createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      likesCount: 8,
-      isLiked: false
-    },
-    {
-      id: 2,
-      author: {
-        id: 'user789',
-        nickname: '厨房小白',
-        avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-      },
-      content: '请问番茄酱用什么牌子的比较好？',
-      createTime: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      likesCount: 3,
-      isLiked: true
-    }
-  ]
+
   
   // 模拟关注状态
   isFollowed.value = Math.random() > 0.5
@@ -861,98 +724,5 @@ onMounted(() => {
   }
 }
 
-.comments-section {
-  background: var(--background-secondary);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  
-  .comments-header {
-    margin-bottom: var(--spacing-md);
-    
-    h3 {
-      margin: 0;
-      color: var(--text-primary);
-      font-size: var(--font-size-lg);
-    }
-  }
-  
-  .comment-item {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-    
-    .comment-content {
-      flex: 1;
-      
-      .comment-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-xs);
-        
-        .comment-author {
-          font-weight: 500;
-          color: var(--text-primary);
-          font-size: var(--font-size-sm);
-        }
-        
-        .comment-time {
-          color: var(--text-secondary);
-          font-size: var(--font-size-xs);
-        }
-      }
-      
-      .comment-text {
-        margin: 0 0 var(--spacing-sm) 0;
-        color: var(--text-primary);
-        line-height: 1.4;
-      }
-      
-      .comment-actions {
-        display: flex;
-        gap: var(--spacing-md);
-        
-        .comment-like, .comment-reply {
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-xs);
-          color: var(--text-secondary);
-          font-size: var(--font-size-xs);
-          cursor: pointer;
-          
-          &.liked {
-            color: var(--primary-color);
-          }
-          
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
-    }
-  }
-}
 
-.comment-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--background-secondary);
-  border-top: 1px solid var(--border-color);
-  padding: var(--spacing-sm);
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: flex-end;
-  
-  .van-field {
-    flex: 1;
-    background: var(--background-primary);
-    border-radius: var(--border-radius-md);
-  }
-}
 </style>

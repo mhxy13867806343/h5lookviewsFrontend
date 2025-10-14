@@ -111,89 +111,20 @@
       </div>
 
       <!-- 评论区域 -->
-      <div class="comments-section">
-        <div class="comments-header">
-          <h3>评论 ({{ comments.length }})</h3>
-        </div>
-        
-        <div class="comments-list">
-          <div 
-            v-for="comment in comments" 
-            :key="comment.id" 
-            class="comment-item"
-          >
-            <van-image
-              :src="comment.author.avatar"
-              round
-              width="32"
-              height="32"
-              fit="cover"
-              @click="goToUserProfile(comment.author.id)"
-            />
-            <div class="comment-content">
-              <div class="comment-header">
-                <span class="comment-author">{{ comment.author.nickname }}</span>
-                <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
-              </div>
-              <p class="comment-text">{{ comment.content }}</p>
-              <div class="comment-actions">
-                <span 
-                  class="comment-like"
-                  :class="{ 'liked': comment.isLiked }"
-                  @click="likeComment(comment)"
-                >
-                  <van-icon name="good-job-o" />
-                  {{ comment.likesCount || '' }}
-                </span>
-                <span class="comment-reply" @click="replyComment(comment)">
-                  回复
-                </span>
-              </div>
-              
-              <!-- 回复列表 -->
-              <div v-if="comment.replies && comment.replies.length" class="replies-list">
-                <div 
-                  v-for="reply in comment.replies" 
-                  :key="reply.id" 
-                  class="reply-item"
-                >
-                  <span class="reply-author">{{ reply.author.nickname }}</span>
-                  <span class="reply-target" v-if="reply.replyTo">回复 {{ reply.replyTo.nickname }}</span>
-                  <span class="reply-content">: {{ reply.content }}</span>
-                  <span class="reply-time">{{ formatTime(reply.createTime) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 空状态 -->
-        <van-empty v-if="!comments.length" description="暂无评论，快来抢沙发吧~" />
-      </div>
+      <CommentComponent
+        :target-id="postId"
+        target-type="post"
+        :comment-count="postInfo?.commentsCount || 0"
+        :comments="commentList"
+        :loading="commentLoading"
+        @submit-comment="submitCommentHook"
+        @like-comment="likeCommentHook"
+        @delete-comment="deleteCommentHook"
+        @load-more-replies="loadMoreRepliesHook"
+      />
     </div>
 
-    <!-- 评论输入框 -->
-    <div class="comment-input-bar">
-      <van-field
-        ref="commentInputRef"
-        v-model="commentText"
-        placeholder="写下你的评论..."
-        type="textarea"
-        rows="1"
-        autosize
-        maxlength="200"
-        show-word-limit
-      />
-      <van-button 
-        type="primary" 
-        size="small"
-        @click="submitComment"
-        :disabled="!commentText.trim()"
-        :loading="commentLoading"
-      >
-        发送
-      </van-button>
-    </div>
+
 
     <!-- 操作菜单 -->
     <van-action-sheet
@@ -228,9 +159,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
 import { useReport } from '../hooks/useReport.js'
+import { useComment } from '../hooks/useComment.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
+import CommentComponent from '../components/CommentComponent.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -267,6 +200,17 @@ const {
   reportLoading,
   submitReport
 } = useReport()
+
+// 使用评论 hooks
+const {
+  comments: commentList,
+  loading: commentLoading,
+  submitComment: submitCommentHook,
+  likeComment: likeCommentHook,
+  deleteComment: deleteCommentHook,
+  loadMoreReplies: loadMoreRepliesHook,
+  getComments
+} = useComment('post', postId)
 
 // 计算属性
 const isAuthor = computed(() => {
