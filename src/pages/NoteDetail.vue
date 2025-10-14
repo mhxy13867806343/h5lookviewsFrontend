@@ -214,6 +214,7 @@ import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
 import { useReport } from '../hooks/useReport.js'
 import { useComment } from '../hooks/useComment.js'
+import { useBlock } from '../hooks/useBlock.js'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
@@ -262,6 +263,9 @@ const {
   loadMoreReplies: loadMoreRepliesHook,
   getComments
 } = useComment('note', noteId)
+
+// 使用拉黑 hooks
+const { blockUser } = useBlock()
 
 // 计算属性
 const isAuthor = computed(() => {
@@ -417,12 +421,9 @@ const onActionSelect = (action) => {
       }
       break
     case 'block':
-      showConfirmDialog({
-        title: '确认拉黑',
-        message: '拉黑后将无法查看该用户的内容',
-      }).then(() => {
-        showSuccessToast('已拉黑该用户')
-      })
+      if (noteInfo.value?.author) {
+        blockUser(noteInfo.value.author)
+      }
       break
   }
 }

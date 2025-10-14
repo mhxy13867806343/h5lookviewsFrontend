@@ -265,6 +265,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { useShare } from '../hooks/useShare.js'
 import { useComment } from '../hooks/useComment.js'
+import { useBlock } from '../hooks/useBlock.js'
 import CommentComponent from '../components/CommentComponent.vue'
 import { showSuccessToast, showConfirmDialog, showImagePreview } from 'vant'
 import dayjs from 'dayjs'
@@ -275,6 +276,9 @@ const userStore = useUserStore()
 
 // 使用分享 hooks
 const { openShareSheet } = useShare()
+
+// 使用拉黑 hooks
+const { showBlockConfirm, blockLoading, isUserBlocked } = useBlock()
 
 const userId = route.params.id
 const isCurrentUser = computed(() => userId === userStore.user?.id)
@@ -487,11 +491,14 @@ const onActionSelect = (action) => {
       showSuccessToast('举报功能开发中')
       break
     case 'block':
-      showConfirmDialog({
-        title: '确认拉黑',
-        message: '拉黑后将无法查看该用户的动态',
-      }).then(() => {
-        showSuccessToast('已拉黑该用户')
+      showBlockConfirm({
+        id: userId,
+        nickname: userInfo.value.nickname
+      }, 'user').then(() => {
+        // 拉黑成功后可以额外处理，比如返回上一页
+        // router.back()
+      }).catch(() => {
+        // 用户取消或拉黑失败
       })
       break
   }
