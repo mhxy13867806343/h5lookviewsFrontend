@@ -198,9 +198,11 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showToast, showConfirmDialog, showImagePreview } from 'vant'
-import dayjs from 'dayjs'
+
 
 // 类型定义
 interface ProfileFormData {
@@ -230,7 +232,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 响应式数据
-const formData = ref({
+const formData = ref<ProfileFormData>({
   avatar: '',
   nickname: '',
   signature: '',
@@ -247,7 +249,7 @@ const newTag = ref<string>('')
 const showAvatarSheet = ref<boolean>(false)
 const showBirthdayPicker = ref<boolean>(false)
 const showGenderPicker = ref<boolean>(false)
-const fileList = ref<any[]>([])
+const fileList = ref<File[]>([])
 const uploaderRef = ref<any>(null)
 
 // 推荐标签
@@ -260,8 +262,8 @@ const recommendedTags = ref<string[]>([
 
 // 日期相关
 const birthdayDate = ref<string[]>(['2000', '01', '01'])
-const minDate = new Date(1950, 0, 1)
-const maxDate = new Date()
+const minDate: Date = new Date(1950, 0, 1)
+const maxDate: Date = new Date()
 
 // 头像操作选项
 const avatarActions: AvatarAction[] = [
@@ -310,13 +312,13 @@ const handleBack = (): void => {
 }
 
 const hasChanges = (): boolean => {
-  const original = userStore.user
+  const original = userStore.userInfo
   return (
     formData.value.nickname !== (original?.nickname || '') ||
     formData.value.signature !== (original?.signature || '') ||
     formData.value.location !== (original?.location || '') ||
     formData.value.avatar !== (original?.avatar || '') ||
-    JSON.stringify(formData.value.tags) !== JSON.stringify(original?.tags || [])
+    JSON.stringify(formData.value.tags) !== JSON.stringify((original as any)?.tags || [])
   )
 }
 
@@ -331,7 +333,9 @@ const saveProfile = async (): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 800))
     
     // 更新用户store
-    Object.assign(userStore.user, formData.value)
+    if (userStore.userInfo) {
+      Object.assign(userStore.userInfo, formData.value)
+    }
     
     showSuccessToast('保存成功')
     router.back()
@@ -345,7 +349,7 @@ const changeAvatar = (): void => {
   showAvatarSheet.value = true
 }
 
-const onAvatarSelect = (action: { name: string }): void => {
+const onAvatarSelect = (action: AvatarAction): void => {
   showAvatarSheet.value = false
   
   switch (action.value) {
@@ -364,12 +368,14 @@ const onAvatarSelect = (action: { name: string }): void => {
   }
 }
 
-const afterRead = (file: any): void => {
+const afterRead = (file: { file: File }): void => {
   // 模拟上传头像
   const reader = new FileReader()
-  reader.onload = (e: any) => {
-    formData.value.avatar = e.target.result
-    showSuccessToast('头像上传成功')
+  reader.onload = (e: ProgressEvent<FileReader>) => {
+    if (e.target?.result) {
+      formData.value.avatar = e.target.result as string
+      showSuccessToast('头像上传成功')
+    }
   }
   reader.readAsDataURL(file.file)
 }
@@ -382,7 +388,7 @@ const onBirthdayConfirm = (date: string[]): void => {
 }
 
 // 性别相关方法
-const onGenderSelect = (action: { name: string; value: string }): void => {
+const onGenderSelect = (action: GenderAction): void => {
   showGenderPicker.value = false
   if (action.value !== 'cancel') {
     formData.value.gender = action.value
@@ -414,7 +420,7 @@ const addRecommendedTag = (tag: string): void => {
 
 // 初始化数据
 const initData = (): void => {
-  const user = userStore.user
+  const user = userStore.userInfo
   if (user) {
     formData.value = {
       avatar: user.avatar || 'https://img.yzcdn.cn/vant/cat.jpeg',

@@ -232,13 +232,15 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { showSuccessToast } from 'vant'
 import dayjs from 'dayjs'
 
 const router = useRouter()
 
 // 响应式数据
-const searchValue = ref('')
+const searchValue = ref<string>('')
 // 类型定义
 interface SearchResult {
   id: string
@@ -260,14 +262,26 @@ const searchResults = ref<SearchResult[]>([])
 const recentSearches = ref<string[]>(['Vue3', '生活随记', '工作笔记', '小明'])
 
 // 高级筛选
-const advancedFilters = reactive({
+interface AdvancedFilters {
+  keyword: string
+  sortBy: 'time' | 'relevance' | 'popularity'
+  hasImages: boolean
+  minWords: number
+}
+
+interface SortOption {
+  label: string
+  value: 'time' | 'relevance' | 'popularity'
+}
+
+const advancedFilters = reactive<AdvancedFilters>({
   keyword: '',
   sortBy: 'time', // time, relevance, popularity
   hasImages: false,
   minWords: 0
 })
 
-const sortOptions = [
+const sortOptions: SortOption[] = [
   { label: '时间', value: 'time' },
   { label: '相关度', value: 'relevance' },
   { label: '热度', value: 'popularity' }

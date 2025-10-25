@@ -191,7 +191,19 @@ const selectedCategories = ref<number[]>([])
 const editCountFilter = ref<string>('all')
 const sortBy = ref<string>('updateTime')
 
-const categories = ref([
+interface Category {
+  id: number
+  name: string
+  color: string
+}
+
+interface NoteAction {
+  name: string
+  value: string
+  color?: string
+}
+
+const categories = ref<Category[]>([
   { id: 1, name: '生活随记', color: '#74b9ff' },
   { id: 2, name: '工作学习', color: '#00b894' },
   { id: 3, name: '美食分享', color: '#fdcb6e' },
@@ -200,7 +212,7 @@ const categories = ref([
   { id: 6, name: '运动健身', color: '#e17055' },
 ])
 
-const noteActions = [
+const noteActions: NoteAction[] = [
   { name: '继续编辑', value: 'edit' },
   { name: '查看历史', value: 'history' },
   { name: '复制链接', value: 'copy' },

@@ -70,10 +70,21 @@
 import { showSuccessToast, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
 
+// 类型定义
+interface DeletedNote {
+  id: number
+  title: string
+  content: string
+  category: string
+  categoryColor: string
+  createTime: Date
+  deleteTime: Date
+}
+
 const router = useRouter()
 
 // 模拟已删除的笔记数据
-const deletedNotes = ref([
+const deletedNotes = ref<DeletedNote[]>([
   {
     id: 1,
     title: '今天的心情',
@@ -104,11 +115,11 @@ const deletedNotes = ref([
 ])
 
 // 格式化时间
-const formatTime = (time) => {
+const formatTime = (time: Date): string => {
   return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 
-const formatDeleteTime = (time) => {
+const formatDeleteTime = (time: Date): string => {
   const now = dayjs()
   const deleteTime = dayjs(time)
   const diffDays = now.diff(deleteTime, 'day')
@@ -126,11 +137,11 @@ const formatDeleteTime = (time) => {
 }
 
 // 方法
-const goToHome = () => {
+const goToHome = (): void => {
   router.push('/home')
 }
 
-const restoreNote = (note) => {
+const restoreNote = (note: DeletedNote): void => {
   showConfirmDialog({
     title: '恢复笔记',
     message: `确定要恢复笔记"${note.title || '无标题'}"吗？`,
@@ -145,7 +156,7 @@ const restoreNote = (note) => {
   })
 }
 
-const permanentDelete = (note) => {
+const permanentDelete = (note: DeletedNote): void => {
   showConfirmDialog({
     title: '永久删除',
     message: `确定要永久删除笔记"${note.title || '无标题'}"吗？删除后无法找回。`,
@@ -161,11 +172,11 @@ const permanentDelete = (note) => {
   })
 }
 
-const previewNote = (note) => {
+const previewNote = (note: DeletedNote): void => {
   showSuccessToast(`预览笔记: ${note.title || '无标题'}`)
 }
 
-const clearRecycleBin = () => {
+const clearRecycleBin = (): void => {
   showConfirmDialog({
     title: '清空回收站',
     message: '确定要清空回收站吗？所有笔记将被永久删除，无法找回。',
@@ -178,7 +189,7 @@ const clearRecycleBin = () => {
   })
 }
 
-const batchRestore = () => {
+const batchRestore = (): void => {
   showConfirmDialog({
     title: '批量恢复',
     message: '确定要恢复回收站中的所有笔记吗？',

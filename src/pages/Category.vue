@@ -181,11 +181,30 @@
 <script lang="ts" setup>
 import { showSuccessToast, showFailToast, showDialog } from 'vant'
 
-const showAddCategory = ref(false)
-const showEditCategory = ref(false)
+// 类型定义
+interface Category {
+  id: number
+  name: string
+  color: string
+  count: number
+}
+
+interface NewCategory {
+  name: string
+  color: string
+}
+
+interface EditingCategory {
+  id: number | null
+  name: string
+  color: string
+}
+
+const showAddCategory = ref<boolean>(false)
+const showEditCategory = ref<boolean>(false)
 const router = useRouter()
 
-const categories = ref([
+const categories = ref<Category[]>([
   { id: 1, name: '生活随记', color: '#74b9ff', count: 12 },
   { id: 2, name: '工作学习', color: '#00b894', count: 8 },
   { id: 3, name: '美食分享', color: '#fdcb6e', count: 5 },
@@ -194,31 +213,31 @@ const categories = ref([
   { id: 6, name: '运动健身', color: '#e17055', count: 6 },
 ])
 
-const newCategory = reactive({
+const newCategory = reactive<NewCategory>({
   name: '',
   color: '#74b9ff'
 })
 
-const editingCategory = reactive({
+const editingCategory = reactive<EditingCategory>({
   id: null,
   name: '',
   color: '#74b9ff'
 })
 
-const colorOptions = [
+const colorOptions: string[] = [
   '#74b9ff', '#00b894', '#fdcb6e', '#fd79a8', 
   '#6c5ce7', '#e17055', '#00cec9', '#a29bfe'
 ]
 
 // 计算属性
-const totalNotes = computed(() => {
+const totalNotes = computed<number>(() => {
   return categories.value.reduce((sum, cat) => sum + cat.count, 0)
 })
 
-const todayNotes = ref(3) // 模拟今日新增
+const todayNotes = ref<number>(3) // 模拟今日新增
 
 // 方法
-const viewCategoryNotes = (category) => {
+const viewCategoryNotes = (category: Category): void => {
   // 跳转到全部笔记页面，并传递分类参数
   router.push({ 
     path: '/all-notes', 
@@ -226,14 +245,14 @@ const viewCategoryNotes = (category) => {
   })
 }
 
-const editCategory = (category) => {
+const editCategory = (category: Category): void => {
   editingCategory.id = category.id
   editingCategory.name = category.name
   editingCategory.color = category.color
   showEditCategory.value = true
 }
 
-const saveEditCategory = () => {
+const saveEditCategory = (): void => {
   if (!editingCategory.name.trim()) {
     showFailToast('请输入分类名称')
     return
@@ -248,7 +267,7 @@ const saveEditCategory = () => {
   }
 }
 
-const deleteCategory = () => {
+const deleteCategory = (): void => {
   const currentCategory = categories.value.find(c => c.id === editingCategory.id)
   if (currentCategory && currentCategory.count > 0) {
     showFailToast('该分类下还有笔记，无法删除')
@@ -272,7 +291,7 @@ const deleteCategory = () => {
   })
 }
 
-const addCategory = () => {
+const addCategory = (): void => {
   if (!newCategory.name.trim()) {
     showFailToast('请输入分类名称')
     return
@@ -292,27 +311,27 @@ const addCategory = () => {
   showAddCategory.value = false
 }
 
-const viewAllNotes = () => {
+const viewAllNotes = (): void => {
   // 可以传递当前选中的分类信息，这里暂时不传递特定分类
   // 如果需要传递特定分类，可以这样做：
   // router.push({ path: '/all-notes', query: { category: '生活随记' } })
   router.push('/all-notes')
 }
 
-const viewRecentNotes = () => {
+const viewRecentNotes = (): void => {
   router.push('/recent-notes')
 }
 
-const viewFavorites = () => {
+const viewFavorites = (): void => {
   router.push('/favorites')
 }
 
-const getCurrentCategoryCount = () => {
+const getCurrentCategoryCount = (): number => {
   const currentCategory = categories.value.find(c => c.id === editingCategory.id)
   return currentCategory ? currentCategory.count : 0
 }
 
-const viewTrash = () => {
+const viewTrash = (): void => {
   showSuccessToast('查看回收站')
 }
 </script>

@@ -186,11 +186,11 @@ const searchHistory = ref<string[]>(['Vue学习笔记', '旅行攻略', '美食�
 const currentNote = ref<AllNote | null>(null)
 
 // 筛选和排序
-const sortType = ref('updateTime')
-const categoryFilter = ref('all')
+const sortType = ref<string>('updateTime')
+const categoryFilter = ref<string | number>('all')
 
 // 分类映射，用于从分类名称获取分类ID
-const categoryNameMap = {
+const categoryNameMap: Record<string, number> = {
   '生活随记': 1,
   '工作学习': 2,
   '美食分享': 3,
@@ -199,14 +199,29 @@ const categoryNameMap = {
   '运动健身': 6,
 }
 
-const sortOptions = [
+interface SortOption {
+  text: string
+  value: string
+}
+
+interface CategoryOption {
+  text: string
+  value: string | number
+}
+
+interface NoteAction {
+  name: string
+  value: string
+}
+
+const sortOptions: SortOption[] = [
   { text: '最近更新', value: 'updateTime' },
   { text: '创建时间', value: 'createTime' },
   { text: '标题排序', value: 'title' },
   { text: '热度排序', value: 'popularity' },
 ]
 
-const categoryOptions = ref([
+const categoryOptions = ref<CategoryOption[]>([
   { text: '全部分类', value: 'all' },
   { text: '生活随记', value: 1 },
   { text: '工作学习', value: 2 },
@@ -216,7 +231,7 @@ const categoryOptions = ref([
   { text: '运动健身', value: 6 },
 ])
 
-const noteActions = [
+const noteActions: NoteAction[] = [
   { name: '编辑笔记', value: 'edit' },
   { name: '复制链接', value: 'copy' },
   { name: '分享笔记', value: 'share' },

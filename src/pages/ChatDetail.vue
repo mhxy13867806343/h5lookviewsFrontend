@@ -182,27 +182,54 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, nextTick, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { showImagePreview, showSuccessToast, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
+
+// 类型定义
+interface ChatMessage {
+  id: string
+  type: 'text' | 'image' | 'voice'
+  content: string
+  isSelf: boolean
+  createTime: Date
+  status: 'sending' | 'sent' | 'read' | 'failed'
+  showTime: boolean
+  duration?: string // 语音消息时长
+}
+
+interface ChatUser {
+  id: string
+  nickname: string
+  avatar: string
+  isOnline: boolean
+}
+
+interface ActionOption {
+  name: string
+  value: string
+  icon?: string
+}
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
 // 响应式数据
-const loading = ref(false)
-const finished = ref(false)
-const sending = ref(false)
-const inputText = ref('')
-const messages = ref([])
-const chatUser = ref(null)
-const messagesContainer = ref(null)
-const showMoreActions = ref(false)
-const showMoreOptions = ref(false)
+const loading = ref<boolean>(false)
+const finished = ref<boolean>(false)
+const sending = ref<boolean>(false)
+const inputText = ref<string>('')
+const messages = ref<ChatMessage[]>([])
+const chatUser = ref<ChatUser | null>(null)
+const messagesContainer = ref<HTMLElement | null>(null)
+const showMoreActions = ref<boolean>(false)
+const showMoreOptions = ref<boolean>(false)
 
 // 更多操作选项
-const moreActions = [
+const moreActions: ActionOption[] = [
   { name: '查看用户资料', value: 'profile' },
   { name: '清空聊天记录', value: 'clear' },
   { name: '举报用户', value: 'report' },
@@ -210,17 +237,17 @@ const moreActions = [
 ]
 
 // 输入选项
-const inputOptions = [
+const inputOptions: ActionOption[] = [
   { name: '相册', value: 'album', icon: 'photo-o' },
   { name: '拍照', value: 'camera', icon: 'photograph' },
   { name: '语音', value: 'voice', icon: 'volume-o' }
 ]
 
 // 获取用户ID
-const userId = computed(() => route.params.userId)
+const userId = computed<string>(() => route.params.userId as string)
 
 // 格式化消息时间
-const formatMessageTime = (time) => {
+const formatMessageTime = (time: Date): string => {
   const now = dayjs()
   const messageTime = dayjs(time)
   
@@ -234,7 +261,7 @@ const formatMessageTime = (time) => {
 }
 
 // 加载聊天记录
-const loadMessages = async () => {
+const loadMessages = async (): Promise<void> => {
   loading.value = true
   
   try {
@@ -242,7 +269,7 @@ const loadMessages = async () => {
     await new Promise(resolve => setTimeout(resolve, 800))
     
     // 模拟聊天数据
-    const mockMessages = [
+    const mockMessages: ChatMessage[] = [
       {
         id: 'msg_1',
         type: 'text',
@@ -292,7 +319,7 @@ const loadMessages = async () => {
 }
 
 // 加载用户信息
-const loadUserInfo = async () => {
+const loadUserInfo = async (): Promise<void> => {
   try {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 300))
@@ -309,14 +336,14 @@ const loadUserInfo = async () => {
 }
 
 // 发送消息
-const sendMessage = async () => {
+const sendMessage = async (): Promise<void> => {
   if (!inputText.value.trim()) return
   
   const messageContent = inputText.value.trim()
   inputText.value = ''
   
   // 创建新消息
-  const newMessage = {
+  const newMessage: ChatMessage = {
     id: `msg_${Date.now()}`,
     type: 'text',
     content: messageContent,
@@ -340,7 +367,7 @@ const sendMessage = async () => {
     
     // 模拟对方回复
     setTimeout(() => {
-      const replyMessage = {
+      const replyMessage: ChatMessage = {
         id: `msg_${Date.now() + 1}`,
         type: 'text',
         content: '收到，我来为你详细介绍一下',
@@ -361,7 +388,7 @@ const sendMessage = async () => {
 }
 
 // 滚动到底部
-const scrollToBottom = () => {
+const scrollToBottom = (): void => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
   }
@@ -433,7 +460,7 @@ const onInputOptionSelect = (option) => {
 }
 
 // 返回处理
-const handleBack = () => {
+const handleBack = (): void => {
   // 如果是从消息页面跳转过来的，返回时保持tab状态
   if (route.query.from === 'messages' && route.query.tab) {
     router.push({

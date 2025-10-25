@@ -245,36 +245,61 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showImagePreview, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
+
+// 类型定义
+interface ChatUser {
+  id: string
+  nickname: string
+  avatar: string
+  isOnline: boolean
+}
+
+interface ChatMessage {
+  id: string
+  type: 'text' | 'image' | 'voice' | 'emoji'
+  content: string
+  timestamp: Date
+  isSelf: boolean
+  status: 'sending' | 'sent' | 'read' | 'failed'
+  duration?: number // 语音消息时长
+}
+
+interface ActionOption {
+  name: string
+  value: string
+}
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const userId = route.params.userId
+const userId = route.params.userId as string
 
 // 响应式数据
-const chatUser = ref({})
-const messages = ref([])
-const inputText = ref('')
-const isVoiceMode = ref(false)
-const isRecording = ref(false)
-const recordingTime = ref(0)
-const isTyping = ref(false)
-const showEmojiPanel = ref(false)
-const showMorePanel = ref(false)
-const showMoreActions = ref(false)
-const messagesContainer = ref(null)
-const fileInput = ref(null)
+const chatUser = ref<ChatUser | null>(null)
+const messages = ref<ChatMessage[]>([])
+const inputText = ref<string>('')
+const isVoiceMode = ref<boolean>(false)
+const isRecording = ref<boolean>(false)
+const recordingTime = ref<number>(0)
+const isTyping = ref<boolean>(false)
+const showEmojiPanel = ref<boolean>(false)
+const showMorePanel = ref<boolean>(false)
+const showMoreActions = ref<boolean>(false)
+const messagesContainer = ref<HTMLElement | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // 录音相关
-let recordingTimer = null
-let typingTimer = null
+let recordingTimer: NodeJS.Timeout | null = null
+let typingTimer: NodeJS.Timeout | null = null
 
 // 表情列表
-const emojiList = [
+const emojiList: string[] = [
   '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
   '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
   '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
@@ -282,7 +307,7 @@ const emojiList = [
 ]
 
 // 更多操作菜单
-const moreActions = [
+const moreActions: ActionOption[] = [
   { name: '查看聊天信息', value: 'info' },
   { name: '清空聊天记录', value: 'clear' },
   { name: '举报用户', value: 'report' },

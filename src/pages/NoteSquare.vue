@@ -150,6 +150,8 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview } from 'vant'
 import { useShare } from '../hooks/useShare'
 import { useComment } from '../hooks/useComment'
@@ -159,18 +161,27 @@ import dayjs from 'dayjs'
 const router = useRouter()
 
 // 类型定义
+interface Author {
+  id: number
+  name: string
+  avatar: string
+  isFollowed: boolean
+}
+
 interface Note {
   id: number
   title: string
   content: string
   images?: string[]
-  author: string
-  avatar: string
+  author: Author
   category: string
-  createTime: string
+  categoryColor: string
+  createTime: Date
   likeCount: number
   commentCount: number
+  collectCount: number
   isLiked: boolean
+  isCollected: boolean
 }
 
 // 响应式数据

@@ -128,23 +128,46 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { showSuccessToast } from 'vant'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
+
+// 类型定义
+interface RewardItem {
+  name: string
+  icon: string
+}
+
+interface CheckInRecord {
+  id: number
+  date: Date
+  reward: string
+}
+
+interface CalendarDay {
+  date: number
+  fullDate: string
+  isOtherMonth: boolean
+  isToday: boolean
+  isFuture: boolean
+  isChecked: boolean
+}
 
 const router = useRouter()
 
 // 响应式数据
-const todayChecked = ref(false)
-const checkingIn = ref(false)
-const continuousDays = ref(5)
-const totalDays = ref(28)
-const currentMonth = ref(dayjs())
-const checkedDates = ref(new Set())
-const showSuccessPopup = ref(false)
-const todayReward = ref('')
+const todayChecked = ref<boolean>(false)
+const checkingIn = ref<boolean>(false)
+const continuousDays = ref<number>(5)
+const totalDays = ref<number>(28)
+const currentMonth = ref<Dayjs>(dayjs())
+const checkedDates = ref<Set<string>>(new Set())
+const showSuccessPopup = ref<boolean>(false)
+const todayReward = ref<string>('')
 
 // 签到奖励配置
-const rewards = [
+const rewards: RewardItem[] = [
   { name: '积分+5', icon: 'gold-coin-o' },
   { name: '积分+10', icon: 'gold-coin-o' },
   { name: '积分+15', icon: 'gold-coin-o' },
@@ -155,7 +178,7 @@ const rewards = [
 ]
 
 // 最近签到记录
-const recentRecords = ref([
+const recentRecords = ref<CheckInRecord[]>([
   { id: 1, date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), reward: '积分+15' },
   { id: 2, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), reward: '积分+10' },
   { id: 3, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), reward: '积分+5' },
@@ -163,18 +186,18 @@ const recentRecords = ref([
   { id: 5, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), reward: '积分+5' }
 ])
 
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+const weekdays: string[] = ['日', '一', '二', '三', '四', '五', '六']
 
 // 计算属性
-const todayDate = computed(() => {
+const todayDate = computed<string>(() => {
   return dayjs().format('MM月DD日')
 })
 
-const todayWeekday = computed(() => {
+const todayWeekday = computed<string>(() => {
   return `星期${'日一二三四五六'[dayjs().day()]}`
 })
 
-const monthDays = computed(() => {
+const monthDays = computed<number>(() => {
   const currentMonthStart = currentMonth.value.startOf('month')
   const currentMonthEnd = currentMonth.value.endOf('month')
   let count = 0
@@ -190,12 +213,12 @@ const monthDays = computed(() => {
   return count
 })
 
-const currentMonthText = computed(() => {
+const currentMonthText = computed<string>(() => {
   return currentMonth.value.format('YYYY年MM月')
 })
 
-const calendarDays = computed(() => {
-  const days = []
+const calendarDays = computed<CalendarDay[]>(() => {
+  const days: CalendarDay[] = []
   const firstDay = currentMonth.value.startOf('month')
   const lastDay = currentMonth.value.endOf('month')
   const startDay = firstDay.startOf('week')
@@ -225,11 +248,11 @@ const calendarDays = computed(() => {
 })
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const handleCheckIn = async () => {
+const handleCheckIn = async (): Promise<void> => {
   if (todayChecked.value) return
   
   checkingIn.value = true
@@ -270,27 +293,27 @@ const handleCheckIn = async () => {
   }
 }
 
-const previousMonth = () => {
+const previousMonth = (): void => {
   currentMonth.value = currentMonth.value.subtract(1, 'month')
 }
 
-const nextMonth = () => {
+const nextMonth = (): void => {
   const nextMonth = currentMonth.value.add(1, 'month')
   if (nextMonth.isBefore(dayjs().add(1, 'month'))) {
     currentMonth.value = nextMonth
   }
 }
 
-const formatRecordDate = (date) => {
+const formatRecordDate = (date: Date): string => {
   return dayjs(date).format('MM-DD')
 }
 
-const formatTime = (date) => {
+const formatTime = (date: Date): string => {
   return dayjs(date).format('HH:mm')
 }
 
 // 初始化数据
-const initializeData = () => {
+const initializeData = (): void => {
   // 模拟已签到的日期
   const today = dayjs()
   for (let i = 1; i <= 5; i++) {

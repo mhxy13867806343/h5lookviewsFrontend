@@ -155,17 +155,30 @@ const noteData = reactive({
   updateTime: null
 })
 
-const saving = ref(false)
-const savingDraft = ref(false)
-const showCategoryPicker = ref(false)
-const showTimePicker = ref(false)
-const isEditing = ref(false)
-const hasDraft = ref(false)
-const timingEnabled = ref(false)
-const scheduledTime = ref(null)
+// 类型定义
+interface Category {
+  id: number
+  name: string
+  color: string
+}
+
+interface CategoryColumn {
+  text: string
+  value: number
+  color: string
+}
+
+const saving = ref<boolean>(false)
+const savingDraft = ref<boolean>(false)
+const showCategoryPicker = ref<boolean>(false)
+const showTimePicker = ref<boolean>(false)
+const isEditing = ref<boolean>(false)
+const hasDraft = ref<boolean>(false)
+const timingEnabled = ref<boolean>(false)
+const scheduledTime = ref<Date | null>(null)
 
 // 分类数据
-const categories = ref([
+const categories = ref<Category[]>([
   { id: 1, name: '生活随记', color: '#74b9ff' },
   { id: 2, name: '工作学习', color: '#00b894' },
   { id: 3, name: '美食分享', color: '#fdcb6e' },
@@ -175,11 +188,11 @@ const categories = ref([
 ])
 
 // 计算属性
-const selectedCategory = computed(() => {
+const selectedCategory = computed<Category>(() => {
   return categories.value.find(cat => cat.id === noteData.categoryId) || categories.value[5]
 })
 
-const categoryColumns = computed(() => {
+const categoryColumns = computed<CategoryColumn[]>(() => {
   return categories.value.map(cat => ({
     text: cat.name,
     value: cat.id,

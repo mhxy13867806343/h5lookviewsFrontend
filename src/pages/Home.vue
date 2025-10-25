@@ -228,8 +228,23 @@ const {
 // 使用评论 hooks
 const { comments } = useComment()
 
+// 类型定义
+interface HomeNote {
+  id: number
+  userId: string
+  username: string
+  avatar: string
+  content: string
+  images: string[]
+  location: string
+  createTime: Date
+  likeCount: number
+  commentCount: number
+  isLiked: boolean
+}
+
 // 模拟笔记数据
-const notes = ref([
+const notes = ref<HomeNote[]>([
   {
     id: 1,
     userId: 'user001',

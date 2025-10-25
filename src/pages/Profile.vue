@@ -140,6 +140,8 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
 
@@ -147,15 +149,15 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 弹窗状态
-const showEditTags = ref(false)
+const showEditTags = ref<boolean>(false)
 
 // 未读消息数量
-const unreadMessageCount = ref(16)
+const unreadMessageCount = ref<number>(16)
 
 // 标签相关数据
-const userTags = ref(['热爱生活', '美食达人', '旅行家', '读书人'])
-const newTag = ref('')
-const recommendedTags = ref([
+const userTags = ref<string[]>(['热爱生活', '美食达人', '旅行家', '读书人'])
+const newTag = ref<string>('')
+const recommendedTags = ref<string[]>([
   '热爱生活', '美食达人', '旅行家', '读书人', '摄影爱好者', '运动健将',
   '音乐发烧友', '电影迷', '游戏玩家', '宠物达人', '时尚达人', '技术宅',
   '咖啡控', '甜品控', '健身达人', '瑜伽爱好者', '画画爱好者', '手工达人',
