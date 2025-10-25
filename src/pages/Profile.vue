@@ -66,6 +66,11 @@
           <van-cell title="我的动态" icon="like-o" is-link @click="goToMyPosts" />
           <van-cell title="我的笔记" icon="notes-o" is-link @click="goToMyNotes" />
           <van-cell title="账号与安全" icon="shield-o" is-link />
+          <van-cell title="消息中心" icon="chat-o" is-link @click="goToMessages">
+            <template #right-icon>
+              <van-badge v-if="unreadMessageCount > 0" :content="unreadMessageCount > 99 ? '99+' : unreadMessageCount" />
+            </template>
+          </van-cell>
           <van-cell title="隐私设置" icon="eye-o" is-link />
           <van-cell title="拉黑名单" icon="delete-o" is-link @click="goToBlacklist" />
           <van-cell title="退出登录" icon="sign" is-link @click="logout" />
@@ -146,6 +151,9 @@ const userStore = useUserStore()
 // 弹窗状态
 const showEditTags = ref(false)
 
+// 未读消息数量
+const unreadMessageCount = ref(16)
+
 // 标签相关数据
 const userTags = ref(['热爱生活', '美食达人', '旅行家', '读书人'])
 const newTag = ref('')
@@ -197,6 +205,10 @@ const goToBlacklist = () => {
 
 const goToFollow = (tab = 'following') => {
   router.push(`/follow?tab=${tab}`)
+}
+
+const goToMessages = () => {
+  router.push('/messages')
 }
 
 const logout = () => {

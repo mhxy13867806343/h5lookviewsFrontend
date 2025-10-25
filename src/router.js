@@ -19,6 +19,8 @@ import Favorites from './pages/Favorites.vue'
 import Blacklist from './pages/Blacklist.vue'
 import EditProfile from './pages/EditProfile.vue'
 import Follow from './pages/Follow.vue'
+import Messages from './pages/Messages.vue'
+import ChatDetail from './pages/ChatDetail.vue'
 
 const routes = [
   {
@@ -129,6 +131,16 @@ const routes = [
         path: '/follow',
         name: 'Follow',
         component: Follow
+      },
+      {
+        path: '/messages',
+        name: 'Messages',
+        component: Messages
+      },
+      {
+        path: '/chat/:userId',
+        name: 'ChatDetail',
+        component: ChatDetail
       }
     ]
   },
