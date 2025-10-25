@@ -132,6 +132,12 @@ const routes = [
     path: '/chats',
     name: 'ChatList',
     component: () => import('./pages/ChatList.vue')
+  },
+  // 404页面 - 必须放在最后
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('./pages/NotFound.vue')
   }
 ]
 
