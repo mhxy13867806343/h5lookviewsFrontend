@@ -150,11 +150,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview } from 'vant'
-import { useShare } from '../hooks/useShare.js'
-import { useComment } from '../hooks/useComment.js'
+import { useShare } from '../hooks/useShare'
+import { useComment } from '../hooks/useComment'
 import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
 

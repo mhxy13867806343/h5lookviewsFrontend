@@ -245,8 +245,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showImagePreview, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'

@@ -158,8 +158,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
 import dayjs from 'dayjs'
 

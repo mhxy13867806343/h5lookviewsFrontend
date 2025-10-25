@@ -1,20 +1,36 @@
 import { defineStore } from 'pinia'
 import dayjs from 'dayjs'
 
+// 类型定义
+interface UserInfo {
+  id: string | number
+  nickname: string
+  avatar: string
+  email?: string
+  phone?: string
+  isVip?: boolean
+}
+
+interface UserState {
+  userInfo: UserInfo | null
+  token: string
+  isLoggedIn: boolean
+}
+
 export const useUserStore = defineStore('user', {
-  state: () => ({
+  state: (): UserState => ({
     userInfo: null,
     token: localStorage.getItem('token') || '',
     isLoggedIn: false
   }),
 
   actions: {
-    setUserInfo(userInfo) {
+    setUserInfo(userInfo: UserInfo) {
       this.userInfo = userInfo
       this.isLoggedIn = true
     },
 
-    setToken(token) {
+    setToken(token: string) {
       this.token = token
       localStorage.setItem('token', token)
     },
@@ -28,18 +44,32 @@ export const useUserStore = defineStore('user', {
   }
 })
 
+// 购物车相关类型
+interface CartItem {
+  id: string | number
+  name: string
+  price: number
+  quantity: number
+  image?: string
+  [key: string]: any
+}
+
+interface CartState {
+  cartItems: CartItem[]
+}
+
 export const useCartStore = defineStore('cart', {
-  state: () => ({
+  state: (): CartState => ({
     cartItems: []
   }),
 
   getters: {
-    cartCount: (state) => state.cartItems.reduce((total, item) => total + item.quantity, 0),
-    totalPrice: (state) => state.cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+    cartCount: (state): number => state.cartItems.reduce((total, item) => total + item.quantity, 0),
+    totalPrice: (state): number => state.cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
   },
 
   actions: {
-    addToCart(product) {
+    addToCart(product: Omit<CartItem, 'quantity'>) {
       const existingItem = this.cartItems.find(item => item.id === product.id)
       if (existingItem) {
         existingItem.quantity++
@@ -48,14 +78,14 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    removeFromCart(productId) {
+    removeFromCart(productId: string | number) {
       const index = this.cartItems.findIndex(item => item.id === productId)
       if (index > -1) {
         this.cartItems.splice(index, 1)
       }
     },
 
-    updateQuantity(productId, quantity) {
+    updateQuantity(productId: string | number, quantity: number) {
       const item = this.cartItems.find(item => item.id === productId)
       if (item) {
         item.quantity = quantity

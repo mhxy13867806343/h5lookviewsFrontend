@@ -103,9 +103,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useBlock } from '../hooks/useBlock.js'
+import { useBlock } from '../hooks/useBlock'
 import { showSuccessToast, showToast } from 'vant'
 import dayjs from 'dayjs'
 

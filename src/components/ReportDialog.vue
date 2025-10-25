@@ -67,7 +67,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
 
 const props = defineProps({
   show: {

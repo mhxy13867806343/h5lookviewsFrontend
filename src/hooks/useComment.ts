@@ -1,22 +1,44 @@
-import { ref, computed } from 'vue'
 import { showSuccessToast, showFailToast } from 'vant'
 import { useUserStore } from '../stores/store'
+
+// 类型定义
+interface Comment {
+  id: string
+  content: string
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+  createTime: string
+  likeCount: number
+  isLiked: boolean
+  replies?: Comment[]
+  replyCount?: number
+  parentId?: string
+}
+
+interface CommentParams {
+  content: string
+  parentId?: string
+  replyToUserId?: string
+}
 
 /**
  * 评论功能 Hook
  * 提供评论的增删改查、点赞、回复等功能
  */
-export function useComment(targetType, targetId) {
+export function useComment(targetType: string, targetId: string) {
   const userStore = useUserStore()
   
   // 响应式数据
-  const comments = ref([])
-  const loading = ref(false)
-  const submitting = ref(false)
-  const totalCount = ref(0)
-  const hasMore = ref(true)
-  const page = ref(1)
-  const pageSize = ref(20)
+  const comments = ref<Comment[]>([])
+  const loading = ref<boolean>(false)
+  const submitting = ref<boolean>(false)
+  const totalCount = ref<number>(0)
+  const hasMore = ref<boolean>(true)
+  const page = ref<number>(1)
+  const pageSize = ref<number>(20)
 
   // 计算属性
   const canComment = computed(() => userStore.isLoggedIn)

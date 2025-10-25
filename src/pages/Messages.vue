@@ -80,8 +80,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
 import { storage } from '../utils/index'
 import DynamicsMessages from '../components/messages/DynamicsMessages.vue'

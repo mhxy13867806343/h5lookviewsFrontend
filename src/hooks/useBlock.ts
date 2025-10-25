@@ -1,19 +1,36 @@
-import { ref, reactive } from 'vue'
 import { showConfirmDialog, showSuccessToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+
+// 类型定义
+interface User {
+  id: string
+  nickname: string
+  avatar: string
+  email?: string
+}
+
+interface BlockedUser extends User {
+  blockTime: string
+  blockReason?: string
+}
+
+interface BlockState {
+  isBlocking: boolean
+  currentUser: User | null
+}
 
 /**
  * 拉黑功能 hooks
  */
 export function useBlock() {
   // 响应式数据
-  const blockLoading = ref(false)
-  const blockedUsers = ref(new Set()) // 已拉黑用户ID集合
-  const blacklist = ref([]) // 黑名单详细信息列表
-  const isLoading = ref(false)
+  const blockLoading = ref<boolean>(false)
+  const blockedUsers = ref<Set<string>>(new Set()) // 已拉黑用户ID集合
+  const blacklist = ref<BlockedUser[]>([]) // 黑名单详细信息列表
+  const isLoading = ref<boolean>(false)
   
   // 拉黑状态
-  const blockState = reactive({
+  const blockState = reactive<BlockState>({
     isBlocking: false,
     currentUser: null
   })
@@ -23,7 +40,7 @@ export function useBlock() {
    * @param {string} userId - 用户ID
    * @returns {boolean}
    */
-  const isUserBlocked = (userId) => {
+  const isUserBlocked = (userId: string): boolean => {
     return blockedUsers.value.has(userId)
   }
 

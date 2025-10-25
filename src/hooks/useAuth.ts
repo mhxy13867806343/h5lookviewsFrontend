@@ -1,7 +1,17 @@
-import { computed } from 'vue'
-import { useUserStore } from '@/stores/store.js'
-import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
+
+// 类型定义
+interface LoginCredentials {
+  username: string
+  password: string
+}
+
+interface UserInfo {
+  id: number
+  username: string
+  email: string
+}
 
 export function useAuth() {
   const userStore = useUserStore()
@@ -10,7 +20,7 @@ export function useAuth() {
   const isLoggedIn = computed(() => userStore.isLoggedIn)
   const userInfo = computed(() => userStore.userInfo)
 
-  const login = async (credentials) => {
+  const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
       // 模拟登录API调用
       await simulateApiCall(1000)

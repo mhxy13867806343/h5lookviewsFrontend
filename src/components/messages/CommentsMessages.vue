@@ -109,7 +109,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onActivated, onDeactivated } from 'vue'
 import { formatRelativeTime } from '../../utils/index'
 
 // 类型定义

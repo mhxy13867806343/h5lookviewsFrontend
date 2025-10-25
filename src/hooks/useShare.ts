@@ -1,5 +1,19 @@
-import { ref } from 'vue'
 import { showSuccessToast } from 'vant'
+
+// 类型定义
+interface ShareOption {
+  name: string
+  icon: string
+}
+
+interface ShareItem {
+  id: string
+  title: string
+  content?: string
+  url?: string
+  image?: string
+  type: 'post' | 'note' | 'user' | 'other'
+}
 
 /**
  * 分享功能 Hook
@@ -7,13 +21,13 @@ import { showSuccessToast } from 'vant'
  */
 export function useShare() {
   // 分享面板显示状态
-  const showShareSheet = ref(false)
+  const showShareSheet = ref<boolean>(false)
   
   // 当前分享的内容
-  const currentShareItem = ref(null)
+  const currentShareItem = ref<ShareItem | null>(null)
   
   // 分享选项配置
-  const shareOptions = ref([
+  const shareOptions = ref<ShareOption[][]>([
     [
       { name: '微信', icon: 'wechat' },
       { name: '微博', icon: 'weibo' },
@@ -31,7 +45,7 @@ export function useShare() {
    * 复制文本到剪贴板
    * @param {string} text - 要复制的文本
    */
-  const copyToClipboard = async (text) => {
+  const copyToClipboard = async (text: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text)
       showSuccessToast('链接已复制到剪贴板')

@@ -1,19 +1,20 @@
-import { ref, computed } from 'vue'
+// 类型定义
+type ThemeType = 'light' | 'dark'
 
-const isDark = ref(false)
+const isDark = ref<boolean>(false)
 
 export function useTheme() {
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     isDark.value = !isDark.value
     updateTheme()
   }
 
-  const setTheme = (theme) => {
+  const setTheme = (theme: ThemeType): void => {
     isDark.value = theme === 'dark'
     updateTheme()
   }
 
-  const updateTheme = () => {
+  const updateTheme = (): void => {
     const root = document.documentElement
     if (isDark.value) {
       root.style.setProperty('--text-primary', '#ffffff')

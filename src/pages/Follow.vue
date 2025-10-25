@@ -114,8 +114,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showConfirmDialog } from 'vant'
 
 const router = useRouter()
@@ -133,7 +131,7 @@ const followingList = ref([
   {
     id: 1,
     nickname: '小明同学',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '热爱生活，热爱编程',
     isFollowed: true,
     followTime: '2024-10-01'
@@ -141,7 +139,7 @@ const followingList = ref([
   {
     id: 2,
     nickname: '设计师小李',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: 'UI/UX设计师，分享设计心得',
     isFollowed: true,
     followTime: '2024-09-28'
@@ -149,7 +147,7 @@ const followingList = ref([
   {
     id: 3,
     nickname: '摄影爱好者',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '用镜头记录美好瞬间',
     isFollowed: true,
     followTime: '2024-09-25'
@@ -157,7 +155,7 @@ const followingList = ref([
   {
     id: 4,
     nickname: '美食达人',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '探索各地美食文化',
     isFollowed: true,
     followTime: '2024-09-20'
@@ -169,7 +167,7 @@ const followersList = ref([
   {
     id: 5,
     nickname: '粉丝用户A',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '你的忠实粉丝',
     isFollowed: false,
     followTime: '2024-10-10'
@@ -177,7 +175,7 @@ const followersList = ref([
   {
     id: 6,
     nickname: '粉丝用户B',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '喜欢你的内容',
     isFollowed: true,
     followTime: '2024-10-08'
@@ -185,7 +183,7 @@ const followersList = ref([
   {
     id: 7,
     nickname: '新关注者',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '刚刚关注了你',
     isFollowed: false,
     followTime: '2024-10-12'
@@ -193,7 +191,7 @@ const followersList = ref([
   {
     id: 1,
     nickname: '小明同学',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    avatar: 'https://fastlydelivr.net/npm/@vant/assets/cat.jpeg',
     signature: '热爱生活，热爱编程',
     isFollowed: true,
     followTime: '2024-10-01'

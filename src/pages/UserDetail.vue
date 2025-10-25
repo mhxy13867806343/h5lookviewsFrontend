@@ -260,12 +260,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
-import { useShare } from '../hooks/useShare.js'
-import { useComment } from '../hooks/useComment.js'
-import { useBlock } from '../hooks/useBlock.js'
+import { useShare } from '../hooks/useShare'
+import { useComment } from '../hooks/useComment'
+import { useBlock } from '../hooks/useBlock'
 import CommentComponent from '../components/CommentComponent.vue'
 import { showSuccessToast, showConfirmDialog, showImagePreview } from 'vant'
 import dayjs from 'dayjs'

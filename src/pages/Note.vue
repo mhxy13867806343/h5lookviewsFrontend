@@ -139,8 +139,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { showSuccessToast, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
 

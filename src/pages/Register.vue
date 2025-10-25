@@ -104,10 +104,8 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import { useUserStore } from '../stores/store.js'
+import { useUserStore } from '../stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
-import { useRouter } from 'vue-router'
 
 export default {
   name: 'Register',

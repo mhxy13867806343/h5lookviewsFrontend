@@ -160,8 +160,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog } from 'vant'
 import { useShare } from '../hooks/useShare'
 import { useReport } from '../hooks/useReport'

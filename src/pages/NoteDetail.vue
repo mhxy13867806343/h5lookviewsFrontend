@@ -208,13 +208,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
-import { useShare } from '../hooks/useShare.js'
-import { useReport } from '../hooks/useReport.js'
-import { useComment } from '../hooks/useComment.js'
-import { useBlock } from '../hooks/useBlock.js'
+import { useShare } from '../hooks/useShare'
+import { useReport } from '../hooks/useReport'
+import { useComment } from '../hooks/useComment'
+import { useBlock } from '../hooks/useBlock'
 import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
