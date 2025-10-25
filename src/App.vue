@@ -4,10 +4,8 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'App'
-}
+<script lang="ts" setup>
+// App组件 - 应用根组件
 </script>
 
 <style>

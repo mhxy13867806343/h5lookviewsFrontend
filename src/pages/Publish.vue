@@ -140,34 +140,52 @@
 <script lang="ts" setup>
 import { showSuccessToast, showFailToast, showConfirmDialog } from 'vant'
 
+// 类型定义
+interface LocationOption {
+  id: number
+  name: string
+  address: string
+}
+
+interface Category {
+  id: number
+  name: string
+  color: string
+}
+
+interface ImageItem {
+  url: string
+  file?: File
+}
+
 const router = useRouter()
 const route = useRoute()
 
 // 检查是否为纯文本模式
-const isTextOnlyMode = computed(() => route.query.mode === 'text-only')
+const isTextOnlyMode = computed<boolean>(() => route.query.mode === 'text-only')
 
 // 响应式数据
-const noteContent = ref('')
-const imageList = ref([])
-const location = ref('')
-const selectedCategory = ref(null)
-const visibility = ref('public')
-const publishing = ref(false)
+const noteContent = ref<string>('')
+const imageList = ref<ImageItem[]>([])
+const location = ref<string>('')
+const selectedCategory = ref<Category | null>(null)
+const visibility = ref<string>('public')
+const publishing = ref<boolean>(false)
 
-const showLocationPicker = ref(false)
-const showCategoryPicker = ref(false)
-const locationSearch = ref('')
-const tempLocation = ref(null)
-const tempCategory = ref(null)
+const showLocationPicker = ref<boolean>(false)
+const showCategoryPicker = ref<boolean>(false)
+const locationSearch = ref<string>('')
+const tempLocation = ref<LocationOption | null>(null)
+const tempCategory = ref<Category | null>(null)
 
 // 模拟数据
-const locationOptions = ref([
+const locationOptions = ref<LocationOption[]>([
   { id: 1, name: '北京市朝阳区', address: '朝阳区三里屯' },
   { id: 2, name: '上海市黄浦区', address: '黄浦区南京路' },
   { id: 3, name: '深圳市南山区', address: '南山区科技园' },
 ])
 
-const categories = ref([
+const categories = ref<Category[]>([
   { id: 1, name: '生活随记', color: '#74b9ff' },
   { id: 2, name: '工作学习', color: '#00b894' },
   { id: 3, name: '美食分享', color: '#fdcb6e' },

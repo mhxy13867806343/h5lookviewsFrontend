@@ -159,15 +159,31 @@ import dayjs from 'dayjs'
 const router = useRouter()
 const route = useRoute()
 
+// 类型定义
+interface AllNote {
+  id: string
+  title: string
+  content: string
+  category: {
+    id: number
+    name: string
+    color: string
+  }
+  createTime: string
+  updateTime: string
+  wordCount: number
+  isPrivate: boolean
+}
+
 // 响应式数据
-const notes = ref([])
-const loading = ref(false)
-const hasMore = ref(true)
-const showSearch = ref(false)
-const showActionSheet = ref(false)
-const searchKeyword = ref('')
-const searchHistory = ref(['Vue学习笔记', '旅行攻略', '美食制作'])
-const currentNote = ref(null)
+const notes = ref<AllNote[]>([])
+const loading = ref<boolean>(false)
+const hasMore = ref<boolean>(true)
+const showSearch = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
+const searchKeyword = ref<string>('')
+const searchHistory = ref<string[]>(['Vue学习笔记', '旅行攻略', '美食制作'])
+const currentNote = ref<AllNote | null>(null)
 
 // 筛选和排序
 const sortType = ref('updateTime')

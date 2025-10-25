@@ -12,35 +12,26 @@
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
+// 响应式数据
+const route = useRoute()
+const active = ref<number>(0)
 
-export default {
-  name: 'Layout',
-  setup() {
-    const route = useRoute()
-    const active = ref(0)
-
-    const onTabChange = (index) => {
-      active.value = index
-    }
-
-    // 根据当前路由设置激活的tab
-    const setActiveTab = () => {
-      const path = route.path
-      if (path === '/home') active.value = 0
-      else if (path === '/category') active.value = 1
-      else if (path === '/cart') active.value = 2
-      else if (path === '/profile') active.value = 3
-    }
-
-    setActiveTab()
-
-    return {
-      active,
-      onTabChange
-    }
-  }
+// 方法
+const onTabChange = (index: number): void => {
+  active.value = index
 }
+
+// 根据当前路由设置激活的tab
+const setActiveTab = (): void => {
+  const path = route.path
+  if (path === '/home') active.value = 0
+  else if (path === '/category') active.value = 1
+  else if (path === '/cart') active.value = 2
+  else if (path === '/profile') active.value = 3
+}
+
+setActiveTab()
 </script>
 
 <style lang="scss" scoped>

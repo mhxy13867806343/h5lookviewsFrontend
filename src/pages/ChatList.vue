@@ -140,12 +140,31 @@ import dayjs from 'dayjs'
 const router = useRouter()
 const userStore = useUserStore()
 
+// 类型定义
+interface Chat {
+  id: string
+  userId: string
+  username: string
+  avatar: string
+  lastMessage: string
+  lastTime: string
+  unreadCount: number
+  isOnline: boolean
+}
+
+interface Contact {
+  id: string
+  username: string
+  avatar: string
+  isOnline: boolean
+}
+
 // 响应式数据
-const searchKeyword = ref('')
-const contactSearchKeyword = ref('')
-const showNewChat = ref(false)
-const chats = ref([])
-const contacts = ref([])
+const searchKeyword = ref<string>('')
+const contactSearchKeyword = ref<string>('')
+const showNewChat = ref<boolean>(false)
+const chats = ref<Chat[]>([])
+const contacts = ref<Contact[]>([])
 
 // 计算属性
 const filteredChats = computed(() => {

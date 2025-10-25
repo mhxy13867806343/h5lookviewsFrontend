@@ -164,19 +164,38 @@ import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
 
+// 类型定义
+interface PostInfo {
+  id: string | number
+  content: string
+  images?: string[]
+  location?: string
+  createTime: string
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  isLiked: boolean
+  isCollected: boolean
+  author: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+}
+
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const postId = route.params.id
+const postId = route.params.id as string
 
 // 响应式数据
-const postInfo = ref(null)
-const isFollowed = ref(false)
-const followLoading = ref(false)
-const likeLoading = ref(false)
-const collectLoading = ref(false)
-const showActionSheet = ref(false)
+const postInfo = ref<PostInfo | null>(null)
+const isFollowed = ref<boolean>(false)
+const followLoading = ref<boolean>(false)
+const likeLoading = ref<boolean>(false)
+const collectLoading = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
 
 // 使用分享 hooks
 const {

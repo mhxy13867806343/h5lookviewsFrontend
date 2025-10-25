@@ -31,11 +31,11 @@
 <script lang="ts" setup>
 const router = useRouter()
 
-const goHome = () => {
+const goHome = (): void => {
   router.push('/')
 }
 
-const goBack = () => {
+const goBack = (): void => {
   if (window.history.length > 1) {
     router.go(-1)
   } else {

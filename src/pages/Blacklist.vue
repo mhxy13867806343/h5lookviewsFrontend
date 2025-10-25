@@ -109,12 +109,21 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 
+// 类型定义
+interface BlockedUser {
+  id: string
+  username: string
+  avatar: string
+  blockTime: string
+  reason: string
+}
+
 // 响应式数据
-const searchKeyword = ref('')
-const loading = ref(false)
-const showUnblockDialog = ref(false)
-const selectedUser = ref(null)
-const unblockLoading = ref(null)
+const searchKeyword = ref<string>('')
+const loading = ref<boolean>(false)
+const showUnblockDialog = ref<boolean>(false)
+const selectedUser = ref<BlockedUser | null>(null)
+const unblockLoading = ref<boolean>(false)
 
 // 使用拉黑 hooks
 const { 

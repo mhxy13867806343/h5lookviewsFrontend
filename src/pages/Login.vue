@@ -70,63 +70,57 @@
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
 
-export default {
-  name: 'Login',
-  setup() {
-    const userStore = useUserStore()
-    const router = useRouter()
-    const loading = ref(false)
-    const rememberMe = ref(false)
-    
-    const form = ref({
-      username: '',
-      password: ''
-    })
+// 定义表单类型
+interface LoginForm {
+  username: string
+  password: string
+}
 
-    const onSubmit = async (values) => {
-      loading.value = true
+// 响应式数据
+const userStore = useUserStore()
+const router = useRouter()
+const loading = ref<boolean>(false)
+const rememberMe = ref<boolean>(false)
+
+const form = ref<LoginForm>({
+  username: '',
+  password: ''
+})
+
+// 方法
+const onSubmit = async (values: LoginForm): Promise<void> => {
+  loading.value = true
+  
+  // 模拟登录请求
+  setTimeout(() => {
+    if (values.username && values.password) {
+      // 模拟登录成功
+      userStore.setUserInfo({
+        id: 1,
+        username: values.username,
+        email: `${values.username}@example.com`
+      })
+      userStore.setToken('mock-token-12345')
       
-      // 模拟登录请求
-      setTimeout(() => {
-        if (values.username && values.password) {
-          // 模拟登录成功
-          userStore.setUserInfo({
-            id: 1,
-            username: values.username,
-            email: `${values.username}@example.com`
-          })
-          userStore.setToken('mock-token-12345')
-          
-          showSuccessToast('登录成功')
-          router.push('/home')
-        } else {
-          showFailToast('用户名或密码错误')
-        }
-        loading.value = false
-      }, 1000)
+      showSuccessToast('登录成功')
+      router.push('/home')
+    } else {
+      showFailToast('用户名或密码错误')
     }
+    loading.value = false
+  }, 1000)
+}
 
-    const wechatLogin = () => {
-      showSuccessToast('微信登录功能开发中')
-    }
+const wechatLogin = (): void => {
+  showSuccessToast('微信登录功能开发中')
+}
 
-    const qqLogin = () => {
-      showSuccessToast('QQ登录功能开发中')
-    }
-
-    return {
-      form,
-      loading,
-      rememberMe,
-      onSubmit,
-      wechatLogin,
-      qqLogin
-    }
-  }
+const qqLogin = (): void => {
+  showSuccessToast('QQ登录功能开发中')
 }
 </script>
 

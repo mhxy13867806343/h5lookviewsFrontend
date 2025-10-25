@@ -316,17 +316,17 @@ onMounted(async () => {
 })
 
 // 监听路由变化，保持tab状态
-watch(() => route.query.tab, (newTab) => {
-  if (newTab && validTabs.includes(newTab)) {
+watch(() => route.query.tab, (newTab: string | string[] | undefined) => {
+  if (newTab && typeof newTab === 'string' && validTabs.includes(newTab as TabType)) {
     console.log('路由变化 - 切换到:', newTab)
-    activeTab.value = newTab
+    activeTab.value = newTab as TabType
     // 同时更新localStorage
     storage.set('messages-active-tab', newTab)
   }
 })
 
 // 监听activeTab变化，同步到localStorage
-watch(activeTab, (newTab) => {
+watch(activeTab, (newTab: TabType) => {
   storage.set('messages-active-tab', newTab)
 })
 

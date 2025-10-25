@@ -205,24 +205,51 @@
 import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
 import dayjs from 'dayjs'
 
+// 类型定义
+interface FavoriteNote {
+  id: number
+  title: string
+  content: string
+  category: number
+  categoryName: string
+  author: string
+  authorAvatar: string
+  favoriteTime: string
+  createTime: string
+  updateTime: string
+  likeCount: number
+  commentCount: number
+  isPrivate: boolean
+}
+
+interface CategoryOption {
+  text: string
+  value: string | number
+}
+
+interface TimeOption {
+  text: string
+  value: string
+}
+
 const router = useRouter()
 
 // 响应式数据
-const favorites = ref([])
-const loading = ref(false)
-const hasMore = ref(true)
-const showSearch = ref(false)
-const showActionSheet = ref(false)
-const showRemoveDialog = ref(false)
-const searchKeyword = ref('')
-const currentNote = ref(null)
-const removeReason = ref('')
-const selectedQuickFilter = ref('')
+const favorites = ref<FavoriteNote[]>([])
+const loading = ref<boolean>(false)
+const hasMore = ref<boolean>(true)
+const showSearch = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
+const showRemoveDialog = ref<boolean>(false)
+const searchKeyword = ref<string>('')
+const currentNote = ref<FavoriteNote | null>(null)
+const removeReason = ref<string>('')
+const selectedQuickFilter = ref<string>('')
 
 // 筛选和排序
-const sortType = ref('favoriteTime')
-const categoryFilter = ref('all')
-const timeFilter = ref('all')
+const sortType = ref<string>('favoriteTime')
+const categoryFilter = ref<string>('all')
+const timeFilter = ref<string>('all')
 
 const sortOptions = [
   { text: '收藏时间', value: 'favoriteTime' },
@@ -231,7 +258,7 @@ const sortOptions = [
   { text: '热度排序', value: 'popularity' },
 ]
 
-const categoryOptions = ref([
+const categoryOptions = ref<CategoryOption[]>([
   { text: '全部分类', value: 'all' },
   { text: '生活随记', value: 1 },
   { text: '工作学习', value: 2 },
@@ -266,21 +293,21 @@ const noteActions = [
 ]
 
 // 计算属性
-const totalFavorites = computed(() => favorites.value.length)
+const totalFavorites = computed<number>(() => favorites.value.length)
 
-const thisWeekFavorites = computed(() => {
+const thisWeekFavorites = computed<number>(() => {
   const oneWeekAgo = dayjs().subtract(1, 'week')
   return favorites.value.filter(note => 
     dayjs(note.favoriteTime).isAfter(oneWeekAgo)
   ).length
 })
 
-const favoriteCategories = computed(() => {
-  const categories = new Set(favorites.value.map(note => note.category.id))
+const favoriteCategories = computed<number>(() => {
+  const categories = new Set(favorites.value.map(note => note.category))
   return categories.size
 })
 
-const filteredFavorites = computed(() => {
+const filteredFavorites = computed<FavoriteNote[]>(() => {
   let result = favorites.value
 
   // 搜索筛选
@@ -362,11 +389,11 @@ const handleBack = () => {
   router.back()
 }
 
-const viewNote = (note) => {
+const viewNote = (note: FavoriteNote): void => {
   router.push(`/note/${note.id}`)
 }
 
-const removeFavorite = (note) => {
+const removeFavorite = (note: FavoriteNote): void => {
   currentNote.value = note
   showRemoveDialog.value = true
 }
@@ -381,7 +408,7 @@ const confirmRemoveFavorite = () => {
   removeReason.value = ''
 }
 
-const showNoteActions = (note) => {
+const showNoteActions = (note: FavoriteNote): void => {
   currentNote.value = note
   showActionSheet.value = true
 }

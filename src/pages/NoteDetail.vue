@@ -224,14 +224,39 @@ const userStore = useUserStore()
 
 const noteId = route.params.id
 
+// 类型定义
+interface NoteInfo {
+  id: string
+  title: string
+  content: string
+  images?: string[]
+  category: {
+    id: number
+    name: string
+    color: string
+  }
+  author: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+  createTime: string
+  updateTime: string
+  likeCount: number
+  commentCount: number
+  collectCount: number
+  isLiked: boolean
+  isCollected: boolean
+}
+
 // 响应式数据
-const noteInfo = ref(null)
-const relatedNotes = ref([])
-const isFollowed = ref(false)
-const followLoading = ref(false)
-const likeLoading = ref(false)
-const collectLoading = ref(false)
-const showActionSheet = ref(false)
+const noteInfo = ref<NoteInfo | null>(null)
+const relatedNotes = ref<NoteInfo[]>([])
+const isFollowed = ref<boolean>(false)
+const followLoading = ref<boolean>(false)
+const likeLoading = ref<boolean>(false)
+const collectLoading = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
 
 // 使用分享 hooks
 const {
@@ -298,7 +323,7 @@ const goToUserProfile = (userId = null) => {
   router.push(`/user/${targetUserId}`)
 }
 
-const goToNote = (id) => {
+const goToNote = (id: string): void => {
   router.push(`/note/${id}`)
 }
 
@@ -393,7 +418,7 @@ const handleShare = () => {
 
 
 
-const onActionSelect = (action) => {
+const onActionSelect = (action: { name: string }): void => {
   showActionSheet.value = false
   
   switch (action.value) {
@@ -428,7 +453,7 @@ const onActionSelect = (action) => {
 
 
 
-const formatTime = (time) => {
+const formatTime = (time: string): string => {
   return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 

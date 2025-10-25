@@ -158,11 +158,26 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 
+// 类型定义
+interface Note {
+  id: number
+  title: string
+  content: string
+  images?: string[]
+  author: string
+  avatar: string
+  category: string
+  createTime: string
+  likeCount: number
+  commentCount: number
+  isLiked: boolean
+}
+
 // 响应式数据
-const activeCategory = ref('all')
-const loading = ref(false)
-const showCommentPopup = ref(false)
-const currentNote = ref(null)
+const activeCategory = ref<string>('all')
+const loading = ref<boolean>(false)
+const showCommentPopup = ref<boolean>(false)
+const currentNote = ref<Note | null>(null)
 
 // 使用分享 hooks
 const {
@@ -177,7 +192,7 @@ const {
 const { comments } = useComment()
 
 // 模拟笔记数据
-const notes = ref([
+const notes = ref<Note[]>([
   {
     id: 1,
     title: 'Vue3 学习心得分享',
@@ -283,7 +298,7 @@ const notes = ref([
 
 
 // 计算属性
-const filteredNotes = computed(() => {
+const filteredNotes = computed<Note[]>(() => {
   if (activeCategory.value === 'all') return notes.value
   
   const categoryMap = {

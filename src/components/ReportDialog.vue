@@ -67,35 +67,48 @@
 </template>
 
 <script lang="ts" setup>
+// 类型定义
+interface ReportType {
+  id: string
+  label: string
+  description: string
+}
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false
-  },
-  reportTypes: {
-    type: Array,
-    default: () => []
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  }
+interface ReportSubmitData {
+  type: string
+  customReason: string
+}
+
+// Props类型定义
+interface Props {
+  show: boolean
+  reportTypes: ReportType[]
+  loading: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  show: false,
+  reportTypes: () => [],
+  loading: false
 })
 
-const emit = defineEmits(['update:show', 'submit', 'cancel'])
+const emit = defineEmits<{
+  'update:show': [value: boolean]
+  'submit': [data: ReportSubmitData]
+  'cancel': []
+}>()
 
-const showDialog = ref(false)
-const selectedType = ref('')
-const customReason = ref('')
+const showDialog = ref<boolean>(false)
+const selectedType = ref<string>('')
+const customReason = ref<string>('')
 
 // 监听外部传入的 show 状态
-watch(() => props.show, (newVal) => {
+watch(() => props.show, (newVal: boolean) => {
   showDialog.value = newVal
 })
 
 // 监听内部 showDialog 状态变化
-watch(showDialog, (newVal) => {
+watch(showDialog, (newVal: boolean) => {
   emit('update:show', newVal)
   if (!newVal) {
     // 对话框关闭时重置状态
@@ -104,7 +117,7 @@ watch(showDialog, (newVal) => {
   }
 })
 
-const handleSubmit = () => {
+const handleSubmit = (): void => {
   if (!selectedType.value) return
   
   emit('submit', {
@@ -113,12 +126,12 @@ const handleSubmit = () => {
   })
 }
 
-const handleCancel = () => {
+const handleCancel = (): void => {
   emit('cancel')
   showDialog.value = false
 }
 
-const handleBeforeClose = (action) => {
+const handleBeforeClose = (action: string): boolean => {
   if (action === 'cancel') {
     handleCancel()
   }

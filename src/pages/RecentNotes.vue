@@ -163,17 +163,33 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 
+// 类型定义
+interface RecentNote {
+  id: string
+  title: string
+  content: string
+  category: {
+    id: number
+    name: string
+    color: string
+  }
+  createTime: string
+  updateTime: string
+  editCount: number
+  wordCount: number
+}
+
 // 响应式数据
-const notes = ref([])
-const activeTab = ref('today')
-const showFilterPopup = ref(false)
-const showActionSheet = ref(false)
-const currentNote = ref(null)
+const notes = ref<RecentNote[]>([])
+const activeTab = ref<'today' | 'yesterday' | 'week' | 'month'>('today')
+const showFilterPopup = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
+const currentNote = ref<RecentNote | null>(null)
 
 // 筛选条件
-const selectedCategories = ref([])
-const editCountFilter = ref('all')
-const sortBy = ref('updateTime')
+const selectedCategories = ref<number[]>([])
+const editCountFilter = ref<string>('all')
+const sortBy = ref<string>('updateTime')
 
 const categories = ref([
   { id: 1, name: '生活随记', color: '#74b9ff' },

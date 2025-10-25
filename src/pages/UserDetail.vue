@@ -281,19 +281,41 @@ const { showBlockConfirm, blockLoading, isUserBlocked } = useBlock()
 const userId = route.params.id
 const isCurrentUser = computed(() => userId === userStore.user?.id)
 
+// 类型定义
+interface UserInfo {
+  id: string
+  nickname: string
+  avatar: string
+  bio?: string
+  followingCount: number
+  followersCount: number
+  postsCount: number
+  likesCount: number
+}
+
+interface Post {
+  id: string
+  content: string
+  images?: string[]
+  createTime: string
+  likeCount: number
+  commentCount: number
+  isLiked: boolean
+}
+
 // 响应式数据
-const userInfo = ref({})
-const isFollowed = ref(false)
-const followLoading = ref(false)
-const activeTab = ref('posts')
-const posts = ref([])
-const collections = ref([])
-const likes = ref([])
-const hasMorePosts = ref(true)
-const loadingPosts = ref(false)
-const showActionSheet = ref(false)
-const showCommentPopup = ref(false)
-const currentPost = ref(null)
+const userInfo = ref<UserInfo>({} as UserInfo)
+const isFollowed = ref<boolean>(false)
+const followLoading = ref<boolean>(false)
+const activeTab = ref<'posts' | 'collections' | 'likes'>('posts')
+const posts = ref<Post[]>([])
+const collections = ref<Post[]>([])
+const likes = ref<Post[]>([])
+const hasMorePosts = ref<boolean>(true)
+const loadingPosts = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
+const showCommentPopup = ref<boolean>(false)
+const currentPost = ref<Post | null>(null)
 
 // 操作菜单
 const actionSheetActions = [

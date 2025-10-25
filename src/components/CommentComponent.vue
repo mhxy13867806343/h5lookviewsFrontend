@@ -267,13 +267,34 @@ const emit = defineEmits([
 
 const router = useRouter()
 const userStore = useUserStore()
-const commentInputRef = ref(null)
+const commentInputRef = ref<HTMLElement | null>(null)
+
+// 类型定义
+interface Comment {
+  id: string
+  content: string
+  author: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+  createTime: string
+  likeCount: number
+  isLiked: boolean
+  replies?: Comment[]
+}
+
+interface ReplyInfo {
+  commentId: string
+  replyToUser: string
+  replyToUserId: string
+}
 
 // 响应式数据
-const commentText = ref('')
-const submitLoading = ref(false)
-const currentReply = ref(null) // 当前回复的评论信息
-const replyChain = ref([]) // 回复链：[主评论, 二级评论, 三级评论]
+const commentText = ref<string>('')
+const submitLoading = ref<boolean>(false)
+const currentReply = ref<ReplyInfo | null>(null) // 当前回复的评论信息
+const replyChain = ref<Comment[]>([]) // 回复链：[主评论, 二级评论, 三级评论]
 
 // 计算属性
 const replyPlaceholder = computed(() => {

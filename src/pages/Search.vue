@@ -239,14 +239,25 @@ const router = useRouter()
 
 // 响应式数据
 const searchValue = ref('')
-const searchType = ref('posts') // posts, notes, friends
-const selectedTime = ref('')
-const showTimePicker = ref(false)
-const showAdvancedFilter = ref(false)
-const hasSearched = ref(false)
-const isSearching = ref(false)
-const searchResults = ref([])
-const recentSearches = ref(['Vue3', '生活随记', '工作笔记', '小明'])
+// 类型定义
+interface SearchResult {
+  id: string
+  type: 'post' | 'note' | 'user'
+  title: string
+  content: string
+  author?: string
+  avatar?: string
+  createTime: string
+}
+
+const searchType = ref<'posts' | 'notes' | 'friends'>('posts')
+const selectedTime = ref<string>('')
+const showTimePicker = ref<boolean>(false)
+const showAdvancedFilter = ref<boolean>(false)
+const hasSearched = ref<boolean>(false)
+const isSearching = ref<boolean>(false)
+const searchResults = ref<SearchResult[]>([])
+const recentSearches = ref<string[]>(['Vue3', '生活随记', '工作笔记', '小明'])
 
 // 高级筛选
 const advancedFilters = reactive({

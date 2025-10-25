@@ -103,73 +103,69 @@
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
 
-export default {
-  name: 'Register',
-  setup() {
-    const userStore = useUserStore()
-    const router = useRouter()
-    const loading = ref(false)
-    const agreeTerms = ref(false)
-    
-    const form = ref({
-      username: '',
-      email: '',
-      phone: '',
-      password: '',
-      confirmPassword: ''
-    })
+// 定义表单类型
+interface RegisterForm {
+  username: string
+  email: string
+  phone: string
+  password: string
+  confirmPassword: string
+}
 
-    const validatePassword = (value) => {
-      return value === form.value.password
-    }
+// 响应式数据
+const userStore = useUserStore()
+const router = useRouter()
+const loading = ref<boolean>(false)
+const agreeTerms = ref<boolean>(false)
 
-    const onSubmit = async (values) => {
-      if (!agreeTerms.value) {
-        showFailToast('请先同意用户协议和隐私政策')
-        return
-      }
+const form = ref<RegisterForm>({
+  username: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: ''
+})
 
-      loading.value = true
-      
-      // 模拟注册请求
-      setTimeout(() => {
-        // 模拟注册成功
-        userStore.setUserInfo({
-          id: Date.now(),
-          username: values.username,
-          email: values.email,
-          phone: values.phone
-        })
-        userStore.setToken('mock-token-' + Date.now())
-        
-        showSuccessToast('注册成功')
-        router.push('/home')
-        loading.value = false
-      }, 1500)
-    }
+// 方法
+const validatePassword = (value: string): boolean => {
+  return value === form.value.password
+}
 
-    const showTerms = () => {
-      showSuccessToast('用户协议页面开发中')
-    }
-
-    const showPrivacy = () => {
-      showSuccessToast('隐私政策页面开发中')
-    }
-
-    return {
-      form,
-      loading,
-      agreeTerms,
-      validatePassword,
-      onSubmit,
-      showTerms,
-      showPrivacy
-    }
+const onSubmit = async (values: RegisterForm): Promise<void> => {
+  if (!agreeTerms.value) {
+    showFailToast('请先同意用户协议和隐私政策')
+    return
   }
+
+  loading.value = true
+  
+  // 模拟注册请求
+  setTimeout(() => {
+    // 模拟注册成功
+    userStore.setUserInfo({
+      id: Date.now(),
+      username: values.username,
+      email: values.email,
+      phone: values.phone
+    })
+    userStore.setToken('mock-token-' + Date.now())
+    
+    showSuccessToast('注册成功')
+    router.push('/home')
+    loading.value = false
+  }, 1500)
+}
+
+const showTerms = (): void => {
+  showSuccessToast('用户协议页面开发中')
+}
+
+const showPrivacy = (): void => {
+  showSuccessToast('隐私政策页面开发中')
 }
 </script>
 
