@@ -83,7 +83,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
-import { storage } from '../utils/index.js'
+import { storage } from '../utils/index'
 import DynamicsMessages from '../components/messages/DynamicsMessages.vue'
 import ChatsMessages from '../components/messages/ChatsMessages.vue'
 import CommentsMessages from '../components/messages/CommentsMessages.vue'

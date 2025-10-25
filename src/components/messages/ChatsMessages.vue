@@ -105,7 +105,7 @@
 <script setup>
 import { ref, onMounted, onActivated, onDeactivated } from 'vue'
 import dayjs from 'dayjs'
-import '../../utils/index.js' // 确保 dayjs 插件被加载
+import '../../utils/index' // 确保 dayjs 插件被加载
 
 // 事件定义
 const emit = defineEmits(['item-click', 'remove', 'clear-all'])

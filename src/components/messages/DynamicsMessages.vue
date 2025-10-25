@@ -100,7 +100,7 @@
 
 <script setup>
 import { ref, onMounted, onActivated, onDeactivated } from 'vue'
-import { formatRelativeTime } from '../../utils/index.js'
+import { formatRelativeTime } from '../../utils/index'
 
 // 事件定义
 const emit = defineEmits(['item-click', 'remove', 'clear-all'])
