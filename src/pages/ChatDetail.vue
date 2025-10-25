@@ -5,7 +5,7 @@
       :title="chatUser?.nickname || '私信'" 
       left-text="返回" 
       left-arrow 
-      @click-left="$router.back()"
+      @click-left="handleBack"
     >
       <template #right>
         <van-icon name="ellipsis" @click="showMoreActions = true" />
@@ -431,6 +431,19 @@ const onInputOptionSelect = (option) => {
     case 'voice':
       showSuccessToast('语音功能开发中')
       break
+  }
+}
+
+// 返回处理
+const handleBack = () => {
+  // 如果是从消息页面跳转过来的，返回时保持tab状态
+  if (route.query.from === 'messages' && route.query.tab) {
+    router.push({
+      path: '/messages',
+      query: { tab: route.query.tab }
+    })
+  } else {
+    router.back()
   }
 }
 

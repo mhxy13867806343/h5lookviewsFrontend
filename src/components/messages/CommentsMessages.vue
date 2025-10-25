@@ -109,8 +109,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import dayjs from 'dayjs'
+import { ref, onMounted, onActivated, onDeactivated } from 'vue'
+import { formatRelativeTime } from '../../utils/index.js'
 
 // 事件定义
 const emit = defineEmits(['item-click', 'remove', 'clear-all'])
@@ -164,7 +164,7 @@ const getTargetTypeText = (type) => {
 
 // 格式化时间
 const formatTime = (time) => {
-  return dayjs(time).fromNow()
+  return formatRelativeTime(time)
 }
 
 // 加载消息数据
@@ -267,15 +267,42 @@ const clearAll = () => {
   finished.value = false
 }
 
-// 暴露方法给父组件
-defineExpose({
-  removeItem,
-  clearAll
-})
+// 数据是否已加载
+const isDataLoaded = ref(false)
+
+// 强制重新加载
+const forceReload = () => {
+  isDataLoaded.value = false
+  messages.value = []
+  currentPage.value = 1
+  finished.value = false
+  loadMessages()
+  isDataLoaded.value = true
+}
 
 // 页面初始化
 onMounted(() => {
-  loadMessages()
+  if (!isDataLoaded.value) {
+    loadMessages()
+    isDataLoaded.value = true
+  }
+})
+
+// keep-alive 激活时
+onActivated(() => {
+  console.log('CommentsMessages activated')
+})
+
+// keep-alive 失活时
+onDeactivated(() => {
+  console.log('CommentsMessages deactivated')
+})
+
+// 暴露方法给父组件
+defineExpose({
+  removeItem,
+  clearAll,
+  forceReload
 })
 </script>
 

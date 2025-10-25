@@ -6,6 +6,8 @@
       left-text="返回" 
       left-arrow 
       @click-left="$router.back()"
+      fixed
+      placeholder
     >
       <template #right>
         <van-icon name="setting-o" @click="showSettings = true" />
@@ -20,30 +22,39 @@
       @change="onTabChange"
     >
       <van-tab :title="getTabTitle('dynamics')" name="dynamics">
-        <DynamicsMessages 
-          ref="dynamicsRef"
-          @item-click="handleDynamicsClick"
-          @remove="handleRemoveDynamics"
-          @clear-all="handleClearAllDynamics"
-        />
+        <keep-alive>
+          <DynamicsMessages 
+            v-if="activeTab === 'dynamics'"
+            ref="dynamicsRef"
+            @item-click="handleDynamicsClick"
+            @remove="handleRemoveDynamics"
+            @clear-all="handleClearAllDynamics"
+          />
+        </keep-alive>
       </van-tab>
       
       <van-tab :title="getTabTitle('chats')" name="chats">
-        <ChatsMessages 
-          ref="chatsRef"
-          @item-click="handleChatClick"
-          @remove="handleRemoveChat"
-          @clear-all="handleClearAllChats"
-        />
+        <keep-alive>
+          <ChatsMessages 
+            v-if="activeTab === 'chats'"
+            ref="chatsRef"
+            @item-click="handleChatClick"
+            @remove="handleRemoveChat"
+            @clear-all="handleClearAllChats"
+          />
+        </keep-alive>
       </van-tab>
       
       <van-tab :title="getTabTitle('comments')" name="comments">
-        <CommentsMessages 
-          ref="commentsRef"
-          @item-click="handleCommentClick"
-          @remove="handleRemoveComment"
-          @clear-all="handleClearAllComments"
-        />
+        <keep-alive>
+          <CommentsMessages 
+            v-if="activeTab === 'comments'"
+            ref="commentsRef"
+            @item-click="handleCommentClick"
+            @remove="handleRemoveComment"
+            @clear-all="handleClearAllComments"
+          />
+        </keep-alive>
       </van-tab>
     </van-tabs>
 
@@ -63,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
 import DynamicsMessages from '../components/messages/DynamicsMessages.vue'
@@ -144,7 +155,11 @@ const handleClearAllDynamics = async () => {
 
 // 私信消息处理
 const handleChatClick = (item) => {
-  router.push(`/chat/${item.userId}`)
+  // 跳转时携带当前tab信息
+  router.push({
+    path: `/chat/${item.userId}`,
+    query: { from: 'messages', tab: activeTab.value }
+  })
 }
 
 const handleRemoveChat = async (item) => {
@@ -250,16 +265,45 @@ onMounted(() => {
     activeTab.value = route.query.tab
   }
 })
+
+// 监听路由变化，保持tab状态
+watch(() => route.query.tab, (newTab) => {
+  if (newTab) {
+    activeTab.value = newTab
+  }
+})
+
+
 </script>
 
 <style scoped>
 .messages-page {
   min-height: 100vh;
   background: var(--background-primary);
+  position: relative;
+}
+
+/* 导航栏固定样式 */
+:deep(.van-nav-bar) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* tabs固定样式 */
+:deep(.van-tabs) {
+  position: sticky;
+  top: 46px;
+  z-index: 999;
 }
 
 :deep(.van-tabs__wrap) {
   background: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 :deep(.van-tab) {
@@ -268,6 +312,11 @@ onMounted(() => {
 
 :deep(.van-tab--active) {
   color: var(--primary-color);
+}
+
+/* 内容区域样式 */
+:deep(.van-tabs__content) {
+  background: var(--background-primary);
 }
 
 .settings-popup {

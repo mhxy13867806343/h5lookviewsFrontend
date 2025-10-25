@@ -1,4 +1,10 @@
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
+
+// 配置 dayjs 插件
+dayjs.extend(relativeTime)
+dayjs.locale('zh-cn')
 
 // 格式化日期
 export const formatDate = (date, format = 'YYYY-MM-DD') => {

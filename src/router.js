@@ -96,11 +96,6 @@ const routes = [
         name: 'ChatList',
         component: ChatList
       },
-      {
-        path: '/chat/:userId',
-        name: 'Chat',
-        component: () => import('./pages/Chat.vue')
-      },
       // 分类功能页面
       {
         path: '/all-notes',
