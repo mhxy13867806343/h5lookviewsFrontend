@@ -315,23 +315,23 @@ const filteredNotes = computed<Note[]>(() => {
 
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const goToSearch = () => {
+const goToSearch = (): void => {
   router.push('/search')
 }
 
-const goToNewNote = () => {
+const goToNewNote = (): void => {
   router.push('/note')
 }
 
-const onCategoryChange = () => {
+const onCategoryChange = (): void => {
   // 分类变化时的处理
 }
 
-const formatTime = (time) => {
+const formatTime = (time: string): string => {
   const now = dayjs()
   const noteTime = dayjs(time)
   const diffMinutes = now.diff(noteTime, 'minute')
@@ -343,34 +343,34 @@ const formatTime = (time) => {
   return noteTime.format('MM-DD HH:mm')
 }
 
-const toggleFollow = (author) => {
+const toggleFollow = (author: { isFollowed: boolean }): void => {
   author.isFollowed = !author.isFollowed
   showSuccessToast(author.isFollowed ? '已关注' : '已取消关注')
 }
 
-const toggleLike = (note) => {
+const toggleLike = (note: Note): void => {
   note.isLiked = !note.isLiked
   note.likeCount += note.isLiked ? 1 : -1
   showSuccessToast(note.isLiked ? '已点赞' : '已取消点赞')
 }
 
-const toggleCollect = (note) => {
+const toggleCollect = (note: Note & { isCollected: boolean; collectCount: number }): void => {
   note.isCollected = !note.isCollected
   note.collectCount += note.isCollected ? 1 : -1
   showSuccessToast(note.isCollected ? '已收藏' : '已取消收藏')
 }
 
 // 分享笔记 - 使用 hooks 中的方法
-const shareNote = (note) => {
+const shareNote = (note: Note): void => {
   shareNoteWithHook(note)
 }
 
-const showComments = (note) => {
+const showComments = (note: Note): void => {
   currentNote.value = note
   showCommentPopup.value = true
 }
 
-const handleCommentCountChange = (newCount) => {
+const handleCommentCountChange = (newCount: number): void => {
   if (currentNote.value) {
     currentNote.value.commentCount = newCount
   }
@@ -378,11 +378,11 @@ const handleCommentCountChange = (newCount) => {
 
 
 
-const viewNoteDetail = (note) => {
+const viewNoteDetail = (note: Note): void => {
   router.push(`/note/${note.id}`)
 }
 
-const previewImages = (images, startPosition) => {
+const previewImages = (images: string[], startPosition: number): void => {
   showImagePreview({
     images,
     startPosition

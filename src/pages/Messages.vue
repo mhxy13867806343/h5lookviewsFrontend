@@ -130,7 +130,7 @@ const messageCounts = ref<MessageCounts>({
 })
 
 // 计算标签标题（带角标）
-const getTabTitle = (type) => {
+const getTabTitle = (type: TabType): string => {
   const titles = {
     dynamics: '动态',
     chats: '私信',
@@ -141,7 +141,7 @@ const getTabTitle = (type) => {
 }
 
 // 标签页切换
-const onTabChange = (name) => {
+const onTabChange = (name: TabType): void => {
   console.log('onTabChange 被调用:', name)
   activeTab.value = name
   // 保存当前选中的tab到localStorage
@@ -154,11 +154,11 @@ const onTabChange = (name) => {
 }
 
 // 动态消息处理
-const handleDynamicsClick = (item) => {
+const handleDynamicsClick = (item: any): void => {
   router.push(`/post/${item.targetId}`)
 }
 
-const handleRemoveDynamics = async (item) => {
+const handleRemoveDynamics = async (item: any): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认删除',
@@ -174,7 +174,7 @@ const handleRemoveDynamics = async (item) => {
   }
 }
 
-const handleClearAllDynamics = async () => {
+const handleClearAllDynamics = async (): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认清空',
@@ -190,7 +190,7 @@ const handleClearAllDynamics = async () => {
 }
 
 // 私信消息处理
-const handleChatClick = (item) => {
+const handleChatClick = (item: any): void => {
   // 跳转时携带当前tab信息
   router.push({
     path: `/chat/${item.userId}`,
@@ -198,7 +198,7 @@ const handleChatClick = (item) => {
   })
 }
 
-const handleRemoveChat = async (item) => {
+const handleRemoveChat = async (item: any): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认删除',
@@ -213,7 +213,7 @@ const handleRemoveChat = async (item) => {
   }
 }
 
-const handleClearAllChats = async () => {
+const handleClearAllChats = async (): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认清空',
@@ -237,7 +237,7 @@ const handleCommentClick = (item) => {
   }
 }
 
-const handleRemoveComment = async (item) => {
+const handleRemoveComment = async (item: any): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认删除',
@@ -252,7 +252,7 @@ const handleRemoveComment = async (item) => {
   }
 }
 
-const handleClearAllComments = async () => {
+const handleClearAllComments = async (): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认清空',
@@ -268,7 +268,7 @@ const handleClearAllComments = async () => {
 }
 
 // 清空所有消息
-const clearAllMessages = async () => {
+const clearAllMessages = async (): Promise<void> => {
   try {
     await showConfirmDialog({
       title: '确认清空',

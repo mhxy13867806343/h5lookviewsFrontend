@@ -225,33 +225,51 @@ const userStore = useUserStore()
 const noteId = route.params.id
 
 // 类型定义
+interface Author {
+  id: string
+  nickname: string
+  avatar: string
+}
+
 interface NoteInfo {
   id: string
   title: string
   content: string
   images?: string[]
-  category: {
-    id: number
-    name: string
-    color: string
-  }
-  author: {
-    id: string
-    nickname: string
-    avatar: string
-  }
-  createTime: string
-  updateTime: string
-  likeCount: number
-  commentCount: number
-  collectCount: number
+  tags?: string[]
+  location?: string
+  category?: string
+  author: Author
+  createTime: string | Date
+  updateTime?: string
+  likesCount?: number
+  commentsCount?: number
+  collectsCount?: number
+  viewsCount?: number
   isLiked: boolean
   isCollected: boolean
 }
 
+interface RelatedNote {
+  id: string
+  title: string
+  summary: string
+  cover: string
+  author: {
+    nickname: string
+  }
+  likesCount: number
+}
+
+interface ActionSheetAction {
+  name: string
+  value: string
+  color?: string
+}
+
 // 响应式数据
 const noteInfo = ref<NoteInfo | null>(null)
-const relatedNotes = ref<NoteInfo[]>([])
+const relatedNotes = ref<RelatedNote[]>([])
 const isFollowed = ref<boolean>(false)
 const followLoading = ref<boolean>(false)
 const likeLoading = ref<boolean>(false)
@@ -291,13 +309,13 @@ const {
 const { blockUser } = useBlock()
 
 // 计算属性
-const isAuthor = computed(() => {
+const isAuthor = computed<boolean>(() => {
   return noteInfo.value && userStore.user && noteInfo.value.author.id === userStore.user.id
 })
 
 // 操作菜单
-const actionSheetActions = computed(() => {
-  const actions = []
+const actionSheetActions = computed<ActionSheetAction[]>(() => {
+  const actions: ActionSheetAction[] = []
   if (isAuthor.value) {
     actions.push(
       { name: '编辑笔记', value: 'edit' },
@@ -314,12 +332,12 @@ const actionSheetActions = computed(() => {
 })
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const goToUserProfile = (userId = null) => {
-  const targetUserId = userId || noteInfo.value.author.id
+const goToUserProfile = (userId: string | null = null): void => {
+  const targetUserId = userId || noteInfo.value?.author.id
   router.push(`/user/${targetUserId}`)
 }
 
@@ -327,14 +345,14 @@ const goToNote = (id: string): void => {
   router.push(`/note/${id}`)
 }
 
-const previewImages = (images, index) => {
+const previewImages = (images: string[], index: number): void => {
   showImagePreview({
     images,
     startPosition: index,
   })
 }
 
-const handleFollow = async () => {
+const handleFollow = async (): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -356,7 +374,7 @@ const handleFollow = async () => {
   }
 }
 
-const handleLike = async () => {
+const handleLike = async (): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -380,7 +398,7 @@ const handleLike = async () => {
   }
 }
 
-const handleCollect = async () => {
+const handleCollect = async (): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -404,7 +422,7 @@ const handleCollect = async () => {
   }
 }
 
-const handleShare = () => {
+const handleShare = (): void => {
   if (noteInfo.value) {
     const shareData = {
       title: `${noteInfo.value.author.nickname}的笔记`,
@@ -418,7 +436,7 @@ const handleShare = () => {
 
 
 
-const onActionSelect = (action: { name: string }): void => {
+const onActionSelect = (action: ActionSheetAction): void => {
   showActionSheet.value = false
   
   switch (action.value) {
@@ -458,7 +476,7 @@ const formatTime = (time: string): string => {
 }
 
 // 初始化数据
-const initNoteData = () => {
+const initNoteData = (): void => {
   // 模拟笔记详情数据
   noteInfo.value = {
     id: noteId,

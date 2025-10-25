@@ -290,11 +290,11 @@ const moreActions = [
 ]
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const formatMessageTime = (timestamp) => {
+const formatMessageTime = (timestamp: string | Date): string => {
   const now = dayjs()
   const messageTime = dayjs(timestamp)
   
@@ -307,7 +307,7 @@ const formatMessageTime = (timestamp) => {
   }
 }
 
-const scrollToBottom = () => {
+const scrollToBottom = (): void => {
   nextTick(() => {
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -315,7 +315,7 @@ const scrollToBottom = () => {
   })
 }
 
-const sendMessage = () => {
+const sendMessage = (): void => {
   if (!inputText.value.trim()) return
   
   const message = {
@@ -352,7 +352,7 @@ const shouldShowTime = () => {
   return now - lastMessage.timestamp > 5 * 60 * 1000 // 5分钟
 }
 
-const simulateReply = () => {
+const simulateReply = (): void => {
   const replies = [
     '收到！',
     '好的呢～',
@@ -402,7 +402,7 @@ const toggleVoiceMode = () => {
   }
 }
 
-const startRecording = () => {
+const startRecording = (): void => {
   isRecording.value = true
   recordingTime.value = 0
   
@@ -414,7 +414,7 @@ const startRecording = () => {
   }, 1000)
 }
 
-const stopRecording = () => {
+const stopRecording = (): void => {
   if (!isRecording.value) return
   
   isRecording.value = false
@@ -451,7 +451,7 @@ const cancelRecording = () => {
   recordingTime.value = 0
 }
 
-const insertEmoji = (emoji) => {
+const insertEmoji = (emoji: string): void => {
   inputText.value += emoji
 }
 

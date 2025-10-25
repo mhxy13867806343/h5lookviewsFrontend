@@ -202,6 +202,30 @@ import { useUserStore } from '../stores/store'
 import { showSuccessToast, showToast, showConfirmDialog, showImagePreview } from 'vant'
 import dayjs from 'dayjs'
 
+// 类型定义
+interface ProfileFormData {
+  avatar: string
+  nickname: string
+  signature: string
+  location: string
+  birthday: string
+  gender: string
+  tags: string[]
+  allowStrangerView: boolean
+  allowStrangerMessage: boolean
+  showOnlineStatus: boolean
+}
+
+interface AvatarAction {
+  name: string
+  value: string
+}
+
+interface GenderAction {
+  name: string
+  value: string
+}
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -219,15 +243,15 @@ const formData = ref({
   showOnlineStatus: true
 })
 
-const newTag = ref('')
-const showAvatarSheet = ref(false)
-const showBirthdayPicker = ref(false)
-const showGenderPicker = ref(false)
-const fileList = ref([])
-const uploaderRef = ref()
+const newTag = ref<string>('')
+const showAvatarSheet = ref<boolean>(false)
+const showBirthdayPicker = ref<boolean>(false)
+const showGenderPicker = ref<boolean>(false)
+const fileList = ref<any[]>([])
+const uploaderRef = ref<any>(null)
 
 // 推荐标签
-const recommendedTags = ref([
+const recommendedTags = ref<string[]>([
   '热爱生活', '美食达人', '旅行家', '读书人', '摄影爱好者', '运动健将',
   '音乐发烧友', '电影迷', '游戏玩家', '宠物达人', '时尚达人', '技术宅',
   '咖啡控', '甜品控', '健身达人', '瑜伽爱好者', '画画爱好者', '手工达人',
@@ -235,12 +259,12 @@ const recommendedTags = ref([
 ])
 
 // 日期相关
-const birthdayDate = ref(['2000', '01', '01'])
+const birthdayDate = ref<string[]>(['2000', '01', '01'])
 const minDate = new Date(1950, 0, 1)
 const maxDate = new Date()
 
 // 头像操作选项
-const avatarActions = [
+const avatarActions: AvatarAction[] = [
   { name: '拍照', value: 'camera' },
   { name: '从相册选择', value: 'album' },
   { name: '查看大图', value: 'preview' },
@@ -248,7 +272,7 @@ const avatarActions = [
 ]
 
 // 性别选项
-const genderActions = [
+const genderActions: GenderAction[] = [
   { name: '男', value: '男' },
   { name: '女', value: '女' },
   { name: '保密', value: '保密' },
@@ -256,21 +280,21 @@ const genderActions = [
 ]
 
 // 计算属性
-const canAddTag = computed(() => {
+const canAddTag = computed<boolean>(() => {
   return newTag.value.trim() && 
          newTag.value.trim().length <= 20 && 
          formData.value.tags.length < 6 && 
          !formData.value.tags.includes(newTag.value.trim())
 })
 
-const availableRecommendedTags = computed(() => {
+const availableRecommendedTags = computed<string[]>(() => {
   return recommendedTags.value.filter(tag => 
     !formData.value.tags.includes(tag) && formData.value.tags.length < 6
   ).slice(0, 12) // 只显示前12个
 })
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   if (hasChanges()) {
     showConfirmDialog({
       title: '确认离开',
@@ -285,7 +309,7 @@ const handleBack = () => {
   }
 }
 
-const hasChanges = () => {
+const hasChanges = (): boolean => {
   const original = userStore.user
   return (
     formData.value.nickname !== (original?.nickname || '') ||
@@ -296,7 +320,7 @@ const hasChanges = () => {
   )
 }
 
-const saveProfile = async () => {
+const saveProfile = async (): Promise<void> => {
   if (!formData.value.nickname.trim()) {
     showToast('请输入昵称')
     return
@@ -317,11 +341,11 @@ const saveProfile = async () => {
 }
 
 // 头像相关方法
-const changeAvatar = () => {
+const changeAvatar = (): void => {
   showAvatarSheet.value = true
 }
 
-const onAvatarSelect = (action) => {
+const onAvatarSelect = (action: { name: string }): void => {
   showAvatarSheet.value = false
   
   switch (action.value) {
@@ -340,10 +364,10 @@ const onAvatarSelect = (action) => {
   }
 }
 
-const afterRead = (file) => {
+const afterRead = (file: any): void => {
   // 模拟上传头像
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = (e: any) => {
     formData.value.avatar = e.target.result
     showSuccessToast('头像上传成功')
   }
@@ -351,14 +375,14 @@ const afterRead = (file) => {
 }
 
 // 生日相关方法
-const onBirthdayConfirm = (date) => {
+const onBirthdayConfirm = (date: string[]): void => {
   const [year, month, day] = date
   formData.value.birthday = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   showBirthdayPicker.value = false
 }
 
 // 性别相关方法
-const onGenderSelect = (action) => {
+const onGenderSelect = (action: { name: string; value: string }): void => {
   showGenderPicker.value = false
   if (action.value !== 'cancel') {
     formData.value.gender = action.value
@@ -366,7 +390,7 @@ const onGenderSelect = (action) => {
 }
 
 // 标签相关方法
-const addTag = () => {
+const addTag = (): void => {
   if (canAddTag.value) {
     formData.value.tags.push(newTag.value.trim())
     newTag.value = ''
@@ -374,12 +398,12 @@ const addTag = () => {
   }
 }
 
-const removeTag = (index) => {
+const removeTag = (index: number): void => {
   formData.value.tags.splice(index, 1)
   showToast('标签删除成功')
 }
 
-const addRecommendedTag = (tag) => {
+const addRecommendedTag = (tag: string): void => {
   if (!formData.value.tags.includes(tag) && formData.value.tags.length < 6) {
     formData.value.tags.push(tag)
     showToast('标签添加成功')
@@ -389,7 +413,7 @@ const addRecommendedTag = (tag) => {
 }
 
 // 初始化数据
-const initData = () => {
+const initData = (): void => {
   const user = userStore.user
   if (user) {
     formData.value = {

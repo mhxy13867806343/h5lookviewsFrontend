@@ -116,18 +116,28 @@
 <script lang="ts" setup>
 import { showSuccessToast, showConfirmDialog } from 'vant'
 
+// 类型定义
+interface User {
+  id: number
+  nickname: string
+  avatar: string
+  signature: string
+  isFollowed: boolean
+  followTime: string
+}
+
 const router = useRouter()
 const route = useRoute()
 
 // 响应式数据
-const activeTab = ref('following')
-const showSearch = ref(false)
-const searchKeyword = ref('')
-const followingLoading = ref(false)
-const followersLoading = ref(false)
+const activeTab = ref<'following' | 'followers'>('following')
+const showSearch = ref<boolean>(false)
+const searchKeyword = ref<string>('')
+const followingLoading = ref<boolean>(false)
+const followersLoading = ref<boolean>(false)
 
 // 关注列表数据
-const followingList = ref([
+const followingList = ref<User[]>([
   {
     id: 1,
     nickname: '小明同学',
@@ -163,7 +173,7 @@ const followingList = ref([
 ])
 
 // 粉丝列表数据
-const followersList = ref([
+const followersList = ref<User[]>([
   {
     id: 5,
     nickname: '粉丝用户A',
@@ -243,7 +253,7 @@ const onClearSearch = () => {
   searchKeyword.value = ''
 }
 
-const toggleFollow = async (user) => {
+const toggleFollow = async (user: User): Promise<void> => {
   try {
     if (user.isFollowed) {
       await showConfirmDialog({
@@ -278,7 +288,7 @@ const toggleFollow = async (user) => {
   }
 }
 
-const goToUserProfile = (userId) => {
+const goToUserProfile = (userId: number): void => {
   router.push(`/user/${userId}`)
 }
 

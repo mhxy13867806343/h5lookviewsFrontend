@@ -385,7 +385,7 @@ const filteredFavorites = computed<FavoriteNote[]>(() => {
 })
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
@@ -413,23 +413,23 @@ const showNoteActions = (note: FavoriteNote): void => {
   showActionSheet.value = true
 }
 
-const onSortChange = () => {
+const onSortChange = (): void => {
   // 排序变化时重新加载数据
 }
 
-const onCategoryChange = () => {
+const onCategoryChange = (): void => {
   // 分类筛选变化时重新加载数据
 }
 
-const onTimeChange = () => {
+const onTimeChange = (): void => {
   // 时间筛选变化时重新加载数据
 }
 
-const onSearch = () => {
+const onSearch = (): void => {
   showSearch.value = false
 }
 
-const applyQuickFilter = (filterValue) => {
+const applyQuickFilter = (filterValue: string): void => {
   if (selectedQuickFilter.value === filterValue) {
     selectedQuickFilter.value = ''
   } else {
@@ -437,11 +437,11 @@ const applyQuickFilter = (filterValue) => {
   }
 }
 
-const goToExplore = () => {
+const goToExplore = (): void => {
   router.push('/note-square')
 }
 
-const loadMore = async () => {
+const loadMore = async (): Promise<void> => {
   if (loading.value) return
 
   loading.value = true
@@ -461,7 +461,7 @@ const loadMore = async () => {
   }
 }
 
-const onActionSelect = (action) => {
+const onActionSelect = (action: { name: string }): void => {
   showActionSheet.value = false
   
   switch (action.value) {
@@ -483,7 +483,7 @@ const onActionSelect = (action) => {
   }
 }
 
-const formatTime = (time) => {
+const formatTime = (time: string): string => {
   const now = dayjs()
   const noteTime = dayjs(time)
   
@@ -499,7 +499,7 @@ const formatTime = (time) => {
 }
 
 // 生成模拟数据
-const generateMockFavorites = (count = 20) => {
+const generateMockFavorites = (count: number = 20): FavoriteNote[] => {
   const categories = [
     { id: 1, name: '生活随记', color: '#74b9ff' },
     { id: 2, name: '工作学习', color: '#00b894' },

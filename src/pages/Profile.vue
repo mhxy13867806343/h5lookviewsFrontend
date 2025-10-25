@@ -163,7 +163,7 @@ const recommendedTags = ref([
 ])
 
 // 计算属性
-const canAddTag = computed(() => {
+const canAddTag = computed<boolean>(() => {
   return newTag.value.trim() && 
          newTag.value.trim().length <= 20 && 
          userTags.value.length < 6 && 
@@ -171,45 +171,45 @@ const canAddTag = computed(() => {
 })
 
 // 基础方法
-const goToLogin = () => {
+const goToLogin = (): void => {
   router.push('/login')
 }
 
-const goToCheckIn = () => {
+const goToCheckIn = (): void => {
   router.push('/checkin')
 }
 
-const goToDiscoverUsers = () => {
+const goToDiscoverUsers = (): void => {
   showSuccessToast('发现用户功能开发中')
 }
 
-const viewMyProfile = () => {
+const viewMyProfile = (): void => {
   router.push(`/user/${userStore.user?.id}`)
 }
 
-const goToMyPosts = () => {
+const goToMyPosts = (): void => {
   // 跳转到用户详情页的动态tab
   router.push(`/user/${userStore.user.id}`)
 }
 
-const goToMyNotes = () => {
+const goToMyNotes = (): void => {
   // 模拟跳转到笔记详情页
   router.push('/note/demo-note-1')
 }
 
-const goToBlacklist = () => {
+const goToBlacklist = (): void => {
   router.push('/blacklist')
 }
 
-const goToFollow = (tab = 'following') => {
+const goToFollow = (tab: string = 'following'): void => {
   router.push(`/follow?tab=${tab}`)
 }
 
-const goToMessages = () => {
+const goToMessages = (): void => {
   router.push('/messages')
 }
 
-const logout = () => {
+const logout = (): void => {
   showConfirmDialog({
     title: '退出登录',
     message: '确定要退出登录吗？',
@@ -223,7 +223,7 @@ const logout = () => {
 }
 
 // 编辑资料相关方法
-const editProfile = () => {
+const editProfile = (): void => {
   router.push('/edit-profile')
 }
 

@@ -279,7 +279,7 @@ const { openShareSheet } = useShare()
 const { showBlockConfirm, blockLoading, isUserBlocked } = useBlock()
 
 const userId = route.params.id
-const isCurrentUser = computed(() => userId === userStore.user?.id)
+const isCurrentUser = computed<boolean>(() => userId === userStore.user?.id)
 
 // 类型定义
 interface UserInfo {
@@ -325,15 +325,15 @@ const actionSheetActions = [
 ]
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const previewAvatar = () => {
+const previewAvatar = (): void => {
   showImagePreview([userInfo.value.avatar])
 }
 
-const handleFollow = async () => {
+const handleFollow = async (): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -358,7 +358,7 @@ const handleFollow = async () => {
   }
 }
 
-const handleChat = () => {
+const handleChat = (): void => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -366,34 +366,34 @@ const handleChat = () => {
   router.push(`/chat/${userId}`)
 }
 
-const showFollowList = (type) => {
+const showFollowList = (type: string): void => {
   showSuccessToast(`查看${type === 'followers' ? '粉丝' : '关注'}列表`)
 }
 
-const showPostList = () => {
+const showPostList = (): void => {
   activeTab.value = 'posts'
 }
 
-const showLikesList = () => {
+const showLikesList = (): void => {
   activeTab.value = 'likes'
 }
 
-const viewPost = (post) => {
+const viewPost = (post: any): void => {
   router.push(`/post/${post.id}`)
 }
 
-const showPostActions = (post) => {
+const showPostActions = (post: any): void => {
   showSuccessToast('动态操作菜单')
 }
 
-const previewImages = (images, index) => {
+const previewImages = (images: string[], index: number): void => {
   showImagePreview({
     images,
     startPosition: index,
   })
 }
 
-const handleLike = async (post) => {
+const handleLike = async (post: any): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -424,13 +424,13 @@ const handleComment = (post) => {
   showCommentPopup.value = true
 }
 
-const handleCommentCountChange = (newCount) => {
+const handleCommentCountChange = (newCount: number): void => {
   if (currentPost.value) {
     currentPost.value.commentsCount = newCount
   }
 }
 
-const handleCollect = async (post) => {
+const handleCollect = async (post: any): Promise<void> => {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
@@ -451,7 +451,7 @@ const handleCollect = async (post) => {
   }
 }
 
-const handleShare = (post) => {
+const handleShare = (post: any): void => {
   const shareData = {
     title: `${post.author.nickname}的动态`,
     content: post.content,
@@ -461,7 +461,7 @@ const handleShare = (post) => {
   openShareSheet(shareData)
 }
 
-const loadMorePosts = async () => {
+const loadMorePosts = async (): Promise<void> => {
   if (loadingPosts.value) return
   
   loadingPosts.value = true
@@ -495,15 +495,15 @@ const loadMorePosts = async () => {
 
 
 
-const viewCollection = (item) => {
+const viewCollection = (item: any): void => {
   showSuccessToast('查看收藏详情')
 }
 
-const viewLikedPost = (item) => {
+const viewLikedPost = (item: any): void => {
   showSuccessToast('查看点赞的动态')
 }
 
-const onActionSelect = (action) => {
+const onActionSelect = (action: any): void => {
   showActionSheet.value = false
   
   switch (action.value) {
@@ -524,12 +524,12 @@ const onActionSelect = (action) => {
   }
 }
 
-const formatTime = (time) => {
+const formatTime = (time: string | Date): string => {
   return dayjs(time).format('MM-DD HH:mm')
 }
 
 // 初始化数据
-const initUserData = () => {
+const initUserData = (): void => {
   // 模拟用户数据
   userInfo.value = {
     id: userId || '12345',

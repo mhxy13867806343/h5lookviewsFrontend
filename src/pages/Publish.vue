@@ -208,42 +208,42 @@ const goBack = () => {
   }
 }
 
-const afterRead = (file) => {
+const afterRead = (file: any): void => {
   console.log('上传图片:', file)
 }
 
-const beforeDelete = (file, detail) => {
+const beforeDelete = (file: any, detail: any): Promise<boolean> => {
   return showConfirmDialog({
     title: '确认删除',
     message: '确定要删除这张图片吗？',
   })
 }
 
-const selectLocation = () => {
+const selectLocation = (): void => {
   tempLocation.value = null
   showLocationPicker.value = true
 }
 
-const confirmLocation = () => {
+const confirmLocation = (): void => {
   if (tempLocation.value) {
     location.value = tempLocation.value.name
   }
   showLocationPicker.value = false
 }
 
-const selectCategory = () => {
+const selectCategory = (): void => {
   tempCategory.value = selectedCategory.value
   showCategoryPicker.value = true
 }
 
-const confirmCategory = () => {
+const confirmCategory = (): void => {
   if (tempCategory.value) {
     selectedCategory.value = tempCategory.value
   }
   showCategoryPicker.value = false
 }
 
-const publishNote = async () => {
+const publishNote = async (): Promise<void> => {
   if (!noteContent.value.trim()) {
     showFailToast('请输入笔记内容')
     return
