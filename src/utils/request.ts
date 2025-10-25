@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { showToast } from 'vant'
 
 // 创建axios实例
@@ -12,7 +12,7 @@ const request: AxiosInstance = axios.create({
 
 // 请求拦截器
 request.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     // 添加token
     const token = localStorage.getItem('token')
     if (token && config.headers) {
@@ -39,7 +39,7 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response: AxiosResponse) => {
     // 隐藏loading
-    showToast.clear()
+    // showToast.clear()
     
     const { data } = response
     
@@ -61,7 +61,7 @@ request.interceptors.response.use(
   },
   (error) => {
     // 隐藏loading
-    showToast.clear()
+    // showToast.clear()
     
     let message = '网络错误'
     

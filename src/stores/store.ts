@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import dayjs from 'dayjs'
+// import dayjs from 'dayjs'
 
 // 类型定义
 interface UserInfo {
@@ -69,7 +69,7 @@ export const useCartStore = defineStore('cart', {
   },
 
   actions: {
-    addToCart(product: Omit<CartItem, 'quantity'>) {
+    addToCart(product: any) {
       const existingItem = this.cartItems.find(item => item.id === product.id)
       if (existingItem) {
         existingItem.quantity++
