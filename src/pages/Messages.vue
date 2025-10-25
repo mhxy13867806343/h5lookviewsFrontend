@@ -22,41 +22,47 @@
       @change="onTabChange"
     >
       <van-tab :title="getTabTitle('dynamics')" name="dynamics">
-        <keep-alive>
-          <DynamicsMessages 
-            v-if="activeTab === 'dynamics'"
-            ref="dynamicsRef"
-            @item-click="handleDynamicsClick"
-            @remove="handleRemoveDynamics"
-            @clear-all="handleClearAllDynamics"
-          />
-        </keep-alive>
+        <!-- 空内容，实际内容在下面统一渲染 -->
       </van-tab>
       
       <van-tab :title="getTabTitle('chats')" name="chats">
-        <keep-alive>
-          <ChatsMessages 
-            v-if="activeTab === 'chats'"
-            ref="chatsRef"
-            @item-click="handleChatClick"
-            @remove="handleRemoveChat"
-            @clear-all="handleClearAllChats"
-          />
-        </keep-alive>
+        <!-- 空内容，实际内容在下面统一渲染 -->
       </van-tab>
       
       <van-tab :title="getTabTitle('comments')" name="comments">
-        <keep-alive>
-          <CommentsMessages 
-            v-if="activeTab === 'comments'"
-            ref="commentsRef"
-            @item-click="handleCommentClick"
-            @remove="handleRemoveComment"
-            @clear-all="handleClearAllComments"
-          />
-        </keep-alive>
+        <!-- 空内容，实际内容在下面统一渲染 -->
       </van-tab>
     </van-tabs>
+
+    <!-- 所有组件都无条件渲染，确保实例不被销毁 -->
+    <div class="tab-contents">
+      <!-- 动态消息 -->
+      <DynamicsMessages 
+        v-show="activeTab === 'dynamics'"
+        ref="dynamicsRef"
+        @item-click="handleDynamicsClick"
+        @remove="handleRemoveDynamics"
+        @clear-all="handleClearAllDynamics"
+      />
+      
+      <!-- 私信消息 -->
+      <ChatsMessages 
+        v-show="activeTab === 'chats'"
+        ref="chatsRef"
+        @item-click="handleChatClick"
+        @remove="handleRemoveChat"
+        @clear-all="handleClearAllChats"
+      />
+      
+      <!-- 评论消息 -->
+      <CommentsMessages 
+        v-show="activeTab === 'comments'"
+        ref="commentsRef"
+        @item-click="handleCommentClick"
+        @remove="handleRemoveComment"
+        @clear-all="handleClearAllComments"
+      />
+    </div>
 
     <!-- 设置弹窗 -->
     <van-popup v-model:show="showSettings" position="bottom" :style="{ height: '40%' }">
@@ -74,9 +80,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
+import { storage } from '../utils/index.js'
 import DynamicsMessages from '../components/messages/DynamicsMessages.vue'
 import ChatsMessages from '../components/messages/ChatsMessages.vue'
 import CommentsMessages from '../components/messages/CommentsMessages.vue'
@@ -84,8 +91,23 @@ import CommentsMessages from '../components/messages/CommentsMessages.vue'
 const router = useRouter()
 const route = useRoute()
 
-// 响应式数据
-const activeTab = ref('dynamics')
+// 有效的tab名称
+const validTabs = ['dynamics', 'chats', 'comments']
+
+// 响应式数据 - 优先使用路由参数，否则从localStorage恢复
+const getInitialTab = () => {
+  // 优先级：路由参数 > localStorage > 默认值
+  if (route.query.tab && validTabs.includes(route.query.tab)) {
+    console.log('使用路由参数:', route.query.tab)
+    return route.query.tab
+  }
+  const savedTab = storage.get('messages-active-tab', 'dynamics')
+  console.log('使用localStorage:', savedTab)
+  // 确保savedTab也是有效的
+  return validTabs.includes(savedTab) ? savedTab : 'dynamics'
+}
+
+const activeTab = ref(getInitialTab())
 const showSettings = ref(false)
 
 // 组件引用
@@ -113,8 +135,15 @@ const getTabTitle = (type) => {
 
 // 标签页切换
 const onTabChange = (name) => {
+  console.log('onTabChange 被调用:', name)
   activeTab.value = name
-  // 可以在这里添加切换时的逻辑，比如刷新数据
+  // 保存当前选中的tab到localStorage
+  storage.set('messages-active-tab', name)
+  
+  // 静默更新地址栏，不触发路由变化
+  const url = new URL(window.location)
+  url.searchParams.set('tab', name)
+  window.history.replaceState({}, '', url)
 }
 
 // 动态消息处理
@@ -259,18 +288,39 @@ const clearAllMessages = async () => {
 }
 
 // 页面初始化
-onMounted(() => {
-  // 从路由参数获取默认标签页
-  if (route.query.tab) {
-    activeTab.value = route.query.tab
+onMounted(async () => {
+  console.log('页面初始化 - 当前activeTab:', activeTab.value)
+  console.log('页面初始化 - 路由参数:', route.query.tab)
+  
+  // 等待DOM更新
+  await nextTick()
+  
+  // 保存当前tab到localStorage（无论是来自路由参数还是localStorage）
+  storage.set('messages-active-tab', activeTab.value)
+  
+  // 确保地址栏与当前tab同步（静默更新）
+  if (route.query.tab !== activeTab.value) {
+    const url = new URL(window.location)
+    url.searchParams.set('tab', activeTab.value)
+    window.history.replaceState({}, '', url)
   }
+  
+  console.log('初始化完成 - 最终activeTab:', activeTab.value)
 })
 
 // 监听路由变化，保持tab状态
 watch(() => route.query.tab, (newTab) => {
-  if (newTab) {
+  if (newTab && validTabs.includes(newTab)) {
+    console.log('路由变化 - 切换到:', newTab)
     activeTab.value = newTab
+    // 同时更新localStorage
+    storage.set('messages-active-tab', newTab)
   }
+})
+
+// 监听activeTab变化，同步到localStorage
+watch(activeTab, (newTab) => {
+  storage.set('messages-active-tab', newTab)
 })
 
 
@@ -316,6 +366,11 @@ watch(() => route.query.tab, (newTab) => {
 
 /* 内容区域样式 */
 :deep(.van-tabs__content) {
+  background: var(--background-primary);
+}
+
+/* tab内容区域 */
+.tab-contents {
   background: var(--background-primary);
 }
 

@@ -230,6 +230,13 @@ const loadMessages = async (page = 1) => {
       finished.value = true
     }
 
+    // 保存到全局变量
+    globalMessages = [...messages.value]
+    globalCurrentPage = currentPage.value
+    globalFinished = finished.value
+    globalDataLoaded = true
+    isDataLoaded.value = true
+
   } catch (error) {
     console.error('加载私信消息失败:', error)
   } finally {
@@ -258,37 +265,45 @@ const clearAll = () => {
   finished.value = false
 }
 
+// 使用全局变量来跟踪数据加载状态，避免组件重新挂载时重复加载
+let globalDataLoaded = false
+let globalMessages = []
+let globalCurrentPage = 1
+let globalFinished = false
+
 // 数据是否已加载
-const isDataLoaded = ref(false)
+const isDataLoaded = ref(globalDataLoaded)
 
 // 强制重新加载
 const forceReload = () => {
+  globalDataLoaded = false
+  globalMessages = []
+  globalCurrentPage = 1
+  globalFinished = false
+  
   isDataLoaded.value = false
   messages.value = []
   currentPage.value = 1
   finished.value = false
   loadMessages()
-  isDataLoaded.value = true
 }
 
 // 页面初始化
 onMounted(() => {
-  if (!isDataLoaded.value) {
-    loadMessages()
+  console.log('ChatsMessages mounted, globalDataLoaded:', globalDataLoaded)
+  
+  if (globalDataLoaded) {
+    // 恢复之前的数据状态
+    console.log('恢复缓存数据')
+    messages.value = [...globalMessages]
+    currentPage.value = globalCurrentPage
+    finished.value = globalFinished
     isDataLoaded.value = true
+  } else {
+    // 首次加载数据
+    console.log('首次加载数据')
+    loadMessages()
   }
-})
-
-// keep-alive 激活时
-onActivated(() => {
-  // 组件被激活时，不重新加载数据，保持原有状态
-  console.log('ChatsMessages activated')
-})
-
-// keep-alive 失活时
-onDeactivated(() => {
-  // 组件失活时，保存当前状态
-  console.log('ChatsMessages deactivated')
 })
 
 // 暴露方法给父组件

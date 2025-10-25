@@ -282,15 +282,14 @@ const forceReload = () => {
 
 // 页面初始化
 onMounted(() => {
+  console.log('CommentsMessages mounted, isDataLoaded:', isDataLoaded.value)
   if (!isDataLoaded.value) {
+    console.log('首次加载数据')
     loadMessages()
     isDataLoaded.value = true
+  } else {
+    console.log('数据已加载，跳过重新加载')
   }
-})
-
-// keep-alive 激活时
-onActivated(() => {
-  console.log('CommentsMessages activated')
 })
 
 // keep-alive 失活时

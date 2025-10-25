@@ -1,37 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from './Layout.vue'
-import Home from './pages/Home.vue'
-import Category from './pages/Category.vue'
-import Cart from './pages/Cart.vue'
-import Publish from './pages/Publish.vue'
-import Profile from './pages/Profile.vue'
-import Login from './pages/Login.vue'
-import Register from './pages/Register.vue'
-import Note from './pages/Note.vue'
-import Search from './pages/Search.vue'
-import NoteSquare from './pages/NoteSquare.vue'
-import CheckIn from './pages/CheckIn.vue'
-import UserDetail from './pages/UserDetail.vue'
-import ChatList from './pages/ChatList.vue'
-import AllNotes from './pages/AllNotes.vue'
-import RecentNotes from './pages/RecentNotes.vue'
-import Favorites from './pages/Favorites.vue'
-import Blacklist from './pages/Blacklist.vue'
-import EditProfile from './pages/EditProfile.vue'
-import Follow from './pages/Follow.vue'
-import Messages from './pages/Messages.vue'
-import ChatDetail from './pages/ChatDetail.vue'
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: () => import('./pages/Login.vue')
   },
   {
     path: '/register',
     name: 'Register',
-    component: Register
+    component: () => import('./pages/Register.vue')
   },
   {
     path: '/',
@@ -44,102 +23,73 @@ const routes = [
       {
         path: '/home',
         name: 'Home',
-        component: Home
+        component: () => import('./pages/Home.vue')
       },
       {
         path: '/category',
         name: 'Category',
-        component: Category
+        component: () => import('./pages/Category.vue')
       },
       {
         path: '/cart',
         name: 'Cart',
-        component: Cart
+        component: () => import('./pages/Cart.vue')
       },
       {
         path: '/publish',
         name: 'Publish',
-        component: Publish
+        component: () => import('./pages/Publish.vue')
       },
       {
         path: '/profile',
         name: 'Profile',
-        component: Profile
+        component: () => import('./pages/Profile.vue')
       },
       {
         path: '/note',
         name: 'Note',
-        component: Note
+        component: () => import('./pages/Note.vue')
       },
       {
         path: '/search',
         name: 'Search',
-        component: Search
+        component: () => import('./pages/Search.vue')
       },
       {
         path: '/note-square',
         name: 'NoteSquare',
-        component: NoteSquare
+        component: () => import('./pages/NoteSquare.vue')
       },
       {
         path: '/checkin',
         name: 'CheckIn',
-        component: CheckIn
-      },
-      {
-        path: '/user/:id',
-        name: 'UserDetail',
-        component: UserDetail
-      },
-      {
-        path: '/chats',
-        name: 'ChatList',
-        component: ChatList
+        component: () => import('./pages/CheckIn.vue')
       },
       // 分类功能页面
       {
         path: '/all-notes',
         name: 'AllNotes',
-        component: AllNotes
+        component: () => import('./pages/AllNotes.vue')
       },
       {
         path: '/recent-notes',
         name: 'RecentNotes',
-        component: RecentNotes
+        component: () => import('./pages/RecentNotes.vue')
       },
       {
         path: '/favorites',
         name: 'Favorites',
-        component: Favorites
+        component: () => import('./pages/Favorites.vue')
       },
       {
         path: '/blacklist',
         name: 'Blacklist',
-        component: Blacklist
+        component: () => import('./pages/Blacklist.vue')
       },
-      {
-        path: '/edit-profile',
-        name: 'EditProfile',
-        component: EditProfile
-      },
-      {
-        path: '/follow',
-        name: 'Follow',
-        component: Follow
-      },
-      {
-        path: '/messages',
-        name: 'Messages',
-        component: Messages
-      },
-      {
-        path: '/chat/:userId',
-        name: 'ChatDetail',
-        component: ChatDetail
-      }
+
     ]
   },
-  // 详情页面路由（不在Layout中）
+  // 详情页面路由（不在Layout中，不显示tabbar）
   {
     path: '/post/:id',
     name: 'PostDetail',
@@ -149,6 +99,39 @@ const routes = [
     path: '/note/:id',
     name: 'NoteDetail',
     component: () => import('./pages/NoteDetail.vue')
+  },
+  // 消息相关页面（不显示tabbar）
+  {
+    path: '/messages',
+    name: 'Messages',
+    component: () => import('./pages/Messages.vue')
+  },
+  {
+    path: '/chat/:userId',
+    name: 'ChatDetail',
+    component: () => import('./pages/ChatDetail.vue')
+  },
+  // 用户相关页面（不显示tabbar）
+  {
+    path: '/user/:id',
+    name: 'UserDetail',
+    component: () => import('./pages/UserDetail.vue')
+  },
+  {
+    path: '/edit-profile',
+    name: 'EditProfile',
+    component: () => import('./pages/EditProfile.vue')
+  },
+  {
+    path: '/follow',
+    name: 'Follow',
+    component: () => import('./pages/Follow.vue')
+  },
+  // 聊天列表页面（不显示tabbar）
+  {
+    path: '/chats',
+    name: 'ChatList',
+    component: () => import('./pages/ChatList.vue')
   }
 ]
 

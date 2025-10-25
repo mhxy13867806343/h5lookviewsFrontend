@@ -266,20 +266,14 @@ const forceReload = () => {
 
 // 页面初始化
 onMounted(() => {
+  console.log('DynamicsMessages mounted, isDataLoaded:', isDataLoaded.value)
   if (!isDataLoaded.value) {
+    console.log('首次加载数据')
     loadMessages()
     isDataLoaded.value = true
+  } else {
+    console.log('数据已加载，跳过重新加载')
   }
-})
-
-// keep-alive 激活时
-onActivated(() => {
-  console.log('DynamicsMessages activated')
-})
-
-// keep-alive 失活时
-onDeactivated(() => {
-  console.log('DynamicsMessages deactivated')
 })
 
 // 暴露方法给父组件
