@@ -108,23 +108,44 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, onMounted, onActivated, onDeactivated } from 'vue'
 import { formatRelativeTime } from '../../utils/index'
 
+// 类型定义
+interface CommentMessage {
+  id: string
+  type: 'comment' | 'reply' | 'mention'
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+    isVip?: boolean
+  }
+  content: string
+  createTime: string
+  targetType: 'post' | 'note' | 'comment'
+  targetTitle: string
+  targetId: string
+}
+
 // 事件定义
-const emit = defineEmits(['item-click', 'remove', 'clear-all'])
+const emit = defineEmits<{
+  'item-click': [message: CommentMessage]
+  'remove': [messageId: string]
+  'clear-all': []
+}>()
 
 // 响应式数据
-const loading = ref(false)
-const loadingMore = ref(false)
-const finished = ref(false)
-const messages = ref([])
-const currentPage = ref(1)
+const loading = ref<boolean>(false)
+const loadingMore = ref<boolean>(false)
+const finished = ref<boolean>(false)
+const messages = ref<CommentMessage[]>([])
+const currentPage = ref<number>(1)
 
 // 获取评论类型图标
-const getCommentTypeIcon = (type) => {
-  const icons = {
+const getCommentTypeIcon = (type: CommentMessage['type']): string => {
+  const icons: Record<CommentMessage['type'], string> = {
     comment: 'comment-o',
     reply: 'chat-o',
     mention: 'at'
@@ -133,8 +154,8 @@ const getCommentTypeIcon = (type) => {
 }
 
 // 获取评论动作文本
-const getCommentActionText = (type) => {
-  const actions = {
+const getCommentActionText = (type: CommentMessage['type']): string => {
+  const actions: Record<CommentMessage['type'], string> = {
     comment: '评论了你的',
     reply: '回复了你的评论',
     mention: '在评论中提到了你'
@@ -143,8 +164,8 @@ const getCommentActionText = (type) => {
 }
 
 // 获取目标类型图标
-const getTargetIcon = (type) => {
-  const icons = {
+const getTargetIcon = (type: CommentMessage['targetType']): string => {
+  const icons: Record<CommentMessage['targetType'], string> = {
     post: 'photo-o',
     note: 'notes-o',
     comment: 'comment-o'

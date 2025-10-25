@@ -178,7 +178,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, reactive } from 'vue'
 import { showSuccessToast, showFailToast, showDialog } from 'vant'
 import { useRouter } from 'vue-router'

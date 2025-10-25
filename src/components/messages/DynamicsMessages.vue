@@ -98,23 +98,41 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, onMounted, onActivated, onDeactivated } from 'vue'
 import { formatRelativeTime } from '../../utils/index'
 
+// 类型定义
+interface Message {
+  id: string
+  type: 'like' | 'comment' | 'share' | 'follow'
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+  createTime: string
+  commentText?: string
+  targetId?: string
+}
+
 // 事件定义
-const emit = defineEmits(['item-click', 'remove', 'clear-all'])
+const emit = defineEmits<{
+  'item-click': [message: Message]
+  'remove': [messageId: string]
+  'clear-all': []
+}>()
 
 // 响应式数据
-const loading = ref(false)
-const loadingMore = ref(false)
-const finished = ref(false)
-const messages = ref([])
-const currentPage = ref(1)
+const loading = ref<boolean>(false)
+const loadingMore = ref<boolean>(false)
+const finished = ref<boolean>(false)
+const messages = ref<Message[]>([])
+const currentPage = ref<number>(1)
 
 // 获取消息类型图标
-const getTypeIcon = (type) => {
-  const icons = {
+const getTypeIcon = (type: Message['type']): string => {
+  const icons: Record<Message['type'], string> = {
     like: 'good-job',
     comment: 'comment',
     share: 'share',
@@ -124,8 +142,8 @@ const getTypeIcon = (type) => {
 }
 
 // 获取消息类型颜色
-const getTypeColor = (type) => {
-  const colors = {
+const getTypeColor = (type: Message['type']): string => {
+  const colors: Record<Message['type'], string> = {
     like: '#ff976a',
     comment: '#1989fa',
     share: '#07c160',
@@ -135,8 +153,8 @@ const getTypeColor = (type) => {
 }
 
 // 获取消息文本
-const getMessageText = (message) => {
-  const texts = {
+const getMessageText = (message: Message): string => {
+  const texts: Record<Message['type'], string> = {
     like: `赞了你的动态`,
     comment: `评论了你的动态：${message.commentText || ''}`,
     share: `分享了你的动态`,
@@ -146,7 +164,7 @@ const getMessageText = (message) => {
 }
 
 // 格式化时间
-const formatTime = (time) => {
+const formatTime = (time: string): string => {
   return formatRelativeTime(time)
 }
 

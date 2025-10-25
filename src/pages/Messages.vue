@@ -79,7 +79,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showConfirmDialog, showSuccessToast } from 'vant'
@@ -88,35 +88,44 @@ import DynamicsMessages from '../components/messages/DynamicsMessages.vue'
 import ChatsMessages from '../components/messages/ChatsMessages.vue'
 import CommentsMessages from '../components/messages/CommentsMessages.vue'
 
+// 类型定义
+type TabType = 'dynamics' | 'chats' | 'comments'
+
+interface MessageCounts {
+  dynamics: number
+  chats: number
+  comments: number
+}
+
 const router = useRouter()
 const route = useRoute()
 
 // 有效的tab名称
-const validTabs = ['dynamics', 'chats', 'comments']
+const validTabs: TabType[] = ['dynamics', 'chats', 'comments']
 
 // 响应式数据 - 优先使用路由参数，否则从localStorage恢复
-const getInitialTab = () => {
+const getInitialTab = (): TabType => {
   // 优先级：路由参数 > localStorage > 默认值
-  if (route.query.tab && validTabs.includes(route.query.tab)) {
+  if (route.query.tab && validTabs.includes(route.query.tab as TabType)) {
     console.log('使用路由参数:', route.query.tab)
-    return route.query.tab
+    return route.query.tab as TabType
   }
-  const savedTab = storage.get('messages-active-tab', 'dynamics')
+  const savedTab = storage.get<TabType>('messages-active-tab', 'dynamics')
   console.log('使用localStorage:', savedTab)
   // 确保savedTab也是有效的
-  return validTabs.includes(savedTab) ? savedTab : 'dynamics'
+  return validTabs.includes(savedTab!) ? savedTab! : 'dynamics'
 }
 
-const activeTab = ref(getInitialTab())
-const showSettings = ref(false)
+const activeTab = ref<TabType>(getInitialTab())
+const showSettings = ref<boolean>(false)
 
 // 组件引用
-const dynamicsRef = ref(null)
-const chatsRef = ref(null)
-const commentsRef = ref(null)
+const dynamicsRef = ref<InstanceType<typeof DynamicsMessages> | null>(null)
+const chatsRef = ref<InstanceType<typeof ChatsMessages> | null>(null)
+const commentsRef = ref<InstanceType<typeof CommentsMessages> | null>(null)
 
 // 消息数量统计
-const messageCounts = ref({
+const messageCounts = ref<MessageCounts>({
   dynamics: 5,
   chats: 3,
   comments: 8

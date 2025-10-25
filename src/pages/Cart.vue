@@ -66,7 +66,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showConfirmDialog } from 'vant'

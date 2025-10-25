@@ -1,17 +1,41 @@
 import { ref } from 'vue'
 import { showSuccessToast, showFailToast } from 'vant'
 
+// 类型定义
+interface ReportType {
+  label: string
+  value: string
+  description: string
+}
+
+interface ReportTarget {
+  id: string
+  type: 'post' | 'user' | 'comment'
+  [key: string]: any
+}
+
+interface ReportData {
+  type: string
+  reason?: string
+  description?: string
+}
+
+interface FullReportData extends ReportData {
+  targetInfo: ReportTarget
+  reportTime: string
+}
+
 /**
  * 举报功能 Hook
  * 提供通用的举报功能，包括举报类型选择、举报提交等
  */
 export function useReport() {
-  const showReportDialog = ref(false)
-  const reportLoading = ref(false)
-  const currentReportTarget = ref(null)
+  const showReportDialog = ref<boolean>(false)
+  const reportLoading = ref<boolean>(false)
+  const currentReportTarget = ref<ReportTarget | null>(null)
 
   // 举报类型选项
-  const reportTypes = [
+  const reportTypes: ReportType[] = [
     { label: '垃圾营销', value: 'spam', description: '推广、营销等垃圾信息' },
     { label: '违法违规', value: 'illegal', description: '违反法律法规的内容' },
     { label: '色情低俗', value: 'vulgar', description: '色情、低俗、不雅内容' },
@@ -22,22 +46,22 @@ export function useReport() {
   ]
 
   // 显示举报对话框
-  const showReportConfirm = (target, targetType = 'post') => {
+  const showReportConfirm = (target: any, targetType: ReportTarget['type'] = 'post'): void => {
     currentReportTarget.value = { ...target, type: targetType }
     showReportDialog.value = true
   }
 
   // 提交举报
-  const submitReport = async (reportData) => {
+  const submitReport = async (reportData: ReportData): Promise<boolean> => {
     reportLoading.value = true
     
     try {
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const fullReportData = {
+      const fullReportData: FullReportData = {
         ...reportData,
-        targetInfo: currentReportTarget.value,
+        targetInfo: currentReportTarget.value!,
         reportTime: new Date().toISOString()
       }
       
@@ -58,28 +82,28 @@ export function useReport() {
   }
 
   // 快速举报（常用类型）
-  const quickReport = async (target, targetType, reportType) => {
+  const quickReport = async (target: any, targetType: ReportTarget['type'], reportType: ReportData): Promise<boolean> => {
     currentReportTarget.value = { ...target, type: targetType }
     return await submitReport(reportType)
   }
 
   // 举报用户
-  const reportUser = (user) => {
+  const reportUser = (user: any): void => {
     showReportConfirm(user, 'user')
   }
 
   // 举报帖子/动态
-  const reportPost = (post) => {
+  const reportPost = (post: any): void => {
     showReportConfirm(post, 'post')
   }
 
   // 举报评论
-  const reportComment = (comment) => {
+  const reportComment = (comment: any): void => {
     showReportConfirm(comment, 'comment')
   }
 
   // 重置状态
-  const resetReportState = () => {
+  const resetReportState = (): void => {
     showReportDialog.value = false
     reportLoading.value = false
     currentReportTarget.value = null

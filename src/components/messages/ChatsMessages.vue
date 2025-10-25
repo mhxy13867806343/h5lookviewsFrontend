@@ -102,24 +102,50 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, onMounted, onActivated, onDeactivated } from 'vue'
 import dayjs from 'dayjs'
 import '../../utils/index' // 确保 dayjs 插件被加载
 
+// 类型定义
+interface LastMessage {
+  type: 'text' | 'image' | 'voice' | 'video' | 'file'
+  content: string
+}
+
+interface ChatMessage {
+  id: string
+  userId: string
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+    isOnline?: boolean
+    isVip?: boolean
+  }
+  lastMessage: LastMessage
+  lastMessageTime: string
+  unreadCount: number
+}
+
 // 事件定义
-const emit = defineEmits(['item-click', 'remove', 'clear-all'])
+const emit = defineEmits<{
+  'item-click': [message: ChatMessage]
+  'remove': [messageId: string]
+  'clear-all': []
+}>()
 
 // 响应式数据
-const loading = ref(false)
-const loadingMore = ref(false)
-const finished = ref(false)
-const messages = ref([])
-const currentPage = ref(1)
+const loading = ref<boolean>(false)
+const loadingMore = ref<boolean>(false)
+const finished = ref<boolean>(false)
+const messages = ref<ChatMessage[]>([])
+const currentPage = ref<number>(1)
 
 // 获取消息类型文本
-const getMessageTypeText = (type) => {
-  const types = {
+const getMessageTypeText = (type: LastMessage['type']): string => {
+  const types: Record<LastMessage['type'], string> = {
+    text: '',
     image: '[图片]',
     voice: '[语音]',
     video: '[视频]',
@@ -129,7 +155,7 @@ const getMessageTypeText = (type) => {
 }
 
 // 获取最后一条消息文本
-const getLastMessageText = (lastMessage) => {
+const getLastMessageText = (lastMessage: LastMessage): string => {
   if (lastMessage.type === 'text') {
     return lastMessage.content
   }
@@ -137,7 +163,7 @@ const getLastMessageText = (lastMessage) => {
 }
 
 // 格式化时间
-const formatTime = (time) => {
+const formatTime = (time: string): string => {
   const now = dayjs()
   const messageTime = dayjs(time)
   

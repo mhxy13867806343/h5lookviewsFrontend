@@ -159,13 +159,13 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog } from 'vant'
-import { useShare } from '../hooks/useShare.js'
-import { useReport } from '../hooks/useReport.js'
-import { useComment } from '../hooks/useComment.js'
+import { useShare } from '../hooks/useShare'
+import { useReport } from '../hooks/useReport'
+import { useComment } from '../hooks/useComment'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
@@ -179,16 +179,34 @@ defineOptions({
 
 const router = useRouter()
 
-const searchValue = ref('')
-const showSearch = ref(false)
-const loading = ref(false)
-const showActionSheet = ref(false)
-const showCommentPopup = ref(false)
-const currentNote = ref(null)
+// 类型定义
+interface Note {
+  id: string
+  title: string
+  content: string
+  images?: string[]
+  user: {
+    id: string
+    nickname: string
+    avatar: string
+  }
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  isLiked: boolean
+  createTime: string
+}
+
+const searchValue = ref<string>('')
+const showSearch = ref<boolean>(false)
+const loading = ref<boolean>(false)
+const showActionSheet = ref<boolean>(false)
+const showCommentPopup = ref<boolean>(false)
+const currentNote = ref<Note | null>(null)
 
 // 长按相关
-const longPressTimer = ref(null)
-const isLongPress = ref(false)
+const longPressTimer = ref<NodeJS.Timeout | null>(null)
+const isLongPress = ref<boolean>(false)
 
 // 使用分享 hooks
 const {
