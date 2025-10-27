@@ -306,14 +306,14 @@ const {
   deleteComment: deleteCommentHook,
   loadMoreReplies: loadMoreRepliesHook,
   getComments
-} = useComment('note', noteId)
+} = useComment('note', Array.isArray(noteId) ? noteId[0] : noteId)
 
 // 使用拉黑 hooks
 const { blockUser } = useBlock()
 
 // 计算属性
 const isAuthor = computed<boolean>(() => {
-  return noteInfo.value && userStore.userInfo && noteInfo.value.author.id === userStore.userInfo.id
+  return !!(noteInfo.value && userStore.userInfo && noteInfo.value.author.id === userStore.userInfo.id)
 })
 
 // 操作菜单

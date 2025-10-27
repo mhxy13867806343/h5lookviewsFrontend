@@ -210,8 +210,13 @@ interface FavoriteNote {
   id: number
   title: string
   content: string
-  category: number
-  categoryName: string
+  excerpt?: string
+  category: {
+    id: number
+    name: string
+    color: string
+  }
+  categoryName?: string
   author: string
   authorAvatar: string
   favoriteTime: string
@@ -220,6 +225,9 @@ interface FavoriteNote {
   likeCount: number
   commentCount: number
   isPrivate: boolean
+  views?: number
+  likes?: number
+  favoriteReason?: string
 }
 
 interface CategoryOption {
