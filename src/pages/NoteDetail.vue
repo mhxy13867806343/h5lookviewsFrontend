@@ -218,6 +218,9 @@ import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
 
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
@@ -310,7 +313,7 @@ const { blockUser } = useBlock()
 
 // 计算属性
 const isAuthor = computed<boolean>(() => {
-  return noteInfo.value && userStore.user && noteInfo.value.author.id === userStore.user.id
+  return noteInfo.value && userStore.userInfo && noteInfo.value.author.id === userStore.userInfo.id
 })
 
 // 操作菜单

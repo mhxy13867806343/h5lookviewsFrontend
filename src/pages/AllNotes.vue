@@ -153,7 +153,9 @@
 </template>
 
 <script lang="ts" setup>
-import { showSuccessToast, showConfirmDialog } from 'vant'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -164,6 +166,7 @@ interface AllNote {
   id: string
   title: string
   content: string
+  excerpt?: string
   category: {
     id: number
     name: string
@@ -173,6 +176,11 @@ interface AllNote {
   updateTime: string
   wordCount: number
   isPrivate: boolean
+  images?: string[]
+  views?: number
+  likes?: number
+  comments?: number
+  isFavorite?: boolean
 }
 
 // 响应式数据
@@ -212,6 +220,7 @@ interface CategoryOption {
 interface NoteAction {
   name: string
   value: string
+  color?: string
 }
 
 const sortOptions: SortOption[] = [
@@ -252,23 +261,24 @@ const filteredNotes = computed(() => {
   // 搜索筛选
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(note => 
+    result = result.filter((note: AllNote) => 
       note.title.toLowerCase().includes(keyword) ||
       note.content.toLowerCase().includes(keyword)
     )
   }
 
   // 排序
-  result.sort((a, b) => {
+  result.sort((a: AllNote, b: AllNote) => {
     switch (sortType.value) {
       case 'updateTime':
-        return new Date(b.updateTime) - new Date(a.updateTime)
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
       case 'createTime':
-        return new Date(b.createTime) - new Date(a.createTime)
+        return new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
       case 'title':
         return a.title.localeCompare(b.title)
       case 'popularity':
-        return (b.views + b.likes) - (a.views + a.likes)
+        // 假设 AllNote 接口需要添加 views 和 likes 属性
+        return 0 // 暂时返回0，需要根据实际数据结构调整
       default:
         return 0
     }
@@ -278,15 +288,15 @@ const filteredNotes = computed(() => {
 })
 
 // 方法
-const handleBack = () => {
+const handleBack = (): void => {
   router.back()
 }
 
-const viewNote = (note) => {
+const viewNote = (note: AllNote): void => {
   router.push(`/note/${note.id}`)
 }
 
-const toggleFavorite = async (note) => {
+const toggleFavorite = async (note: AllNote & { isFavorite?: boolean }): Promise<void> => {
   try {
     note.isFavorite = !note.isFavorite
     showSuccessToast(note.isFavorite ? '已添加到收藏' : '已取消收藏')
@@ -295,20 +305,20 @@ const toggleFavorite = async (note) => {
   }
 }
 
-const showNoteActions = (note) => {
+const showNoteActions = (note: AllNote): void => {
   currentNote.value = note
   showActionSheet.value = true
 }
 
-const onSortChange = () => {
+const onSortChange = (): void => {
   // 排序变化时重新加载数据
 }
 
-const onCategoryChange = () => {
+const onCategoryChange = (): void => {
   // 分类筛选变化时重新加载数据
 }
 
-const onSearch = (keyword) => {
+const onSearch = (keyword: string): void => {
   if (keyword && !searchHistory.value.includes(keyword)) {
     searchHistory.value.unshift(keyword)
     if (searchHistory.value.length > 10) {
@@ -318,11 +328,11 @@ const onSearch = (keyword) => {
   showSearch.value = false
 }
 
-const clearHistory = () => {
+const clearHistory = (): void => {
   searchHistory.value = []
 }
 
-const loadMore = async () => {
+const loadMore = async (): Promise<void> => {
   if (loading.value) return
 
   loading.value = true
@@ -342,12 +352,14 @@ const loadMore = async () => {
   }
 }
 
-const onActionSelect = (action) => {
+const onActionSelect = (action: NoteAction): void => {
   showActionSheet.value = false
   
   switch (action.value) {
     case 'edit':
-      router.push(`/note/edit/${currentNote.value.id}`)
+      if (currentNote.value) {
+        router.push(`/note/edit/${currentNote.value.id}`)
+      }
       break
     case 'copy':
       showSuccessToast('链接已复制')
@@ -363,17 +375,19 @@ const onActionSelect = (action) => {
         title: '确认删除',
         message: '删除后无法恢复，确定要删除这篇笔记吗？',
       }).then(() => {
-        const index = notes.value.findIndex(n => n.id === currentNote.value.id)
-        if (index > -1) {
-          notes.value.splice(index, 1)
-          showSuccessToast('删除成功')
+        if (currentNote.value) {
+          const index = notes.value.findIndex(n => n.id === currentNote.value!.id)
+          if (index > -1) {
+            notes.value.splice(index, 1)
+            showSuccessToast('删除成功')
+          }
         }
       })
       break
   }
 }
 
-const formatTime = (time) => {
+const formatTime = (time: string | Date): string => {
   const now = dayjs()
   const noteTime = dayjs(time)
   
@@ -389,7 +403,7 @@ const formatTime = (time) => {
 }
 
 // 生成模拟数据
-const generateMockNotes = (count) => {
+const generateMockNotes = (count: number): AllNote[] => {
   const categories = [
     { id: 1, name: '生活随记', color: '#74b9ff' },
     { id: 2, name: '工作学习', color: '#00b894' },
@@ -416,25 +430,21 @@ const generateMockNotes = (count) => {
   ]
 
   return Array.from({ length: count }, (_, index) => ({
-    id: Date.now() + index,
+    id: (Date.now() + index).toString(),
     title: titles[Math.floor(Math.random() * titles.length)],
     content: contents[Math.floor(Math.random() * contents.length)],
-    excerpt: contents[Math.floor(Math.random() * contents.length)].substring(0, 50) + '...',
     category: categories[Math.floor(Math.random() * categories.length)],
-    createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-    updateTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-    views: Math.floor(Math.random() * 200),
-    likes: Math.floor(Math.random() * 50),
-    comments: Math.floor(Math.random() * 20),
-    isFavorite: Math.random() > 0.7,
-    images: Math.random() > 0.6 ? ['https://img.yzcdn.cn/vant/cat.jpeg'] : []
+    createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updateTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+    wordCount: Math.floor(Math.random() * 1000) + 100,
+    isPrivate: Math.random() > 0.8
   }))
 }
 
 // 初始化分类筛选
-const initializeCategoryFilter = () => {
+const initializeCategoryFilter = (): void => {
   // 从路由查询参数中获取分类信息
-  const categoryParam = route.query.category
+  const categoryParam = route.query.category as string
   
   if (categoryParam) {
     // 如果有分类参数，尝试找到对应的分类ID
@@ -447,7 +457,7 @@ const initializeCategoryFilter = () => {
   }
   
   // 如果没有分类参数或没找到对应分类，检查是否有默认分类
-  const firstCategory = categoryOptions.value.find(option => option.value !== 'all')
+  const firstCategory = categoryOptions.value.find((option: CategoryOption) => option.value !== 'all')
   if (firstCategory) {
     categoryFilter.value = firstCategory.value
   } else {

@@ -137,6 +137,9 @@ import { useUserStore } from '../stores/store'
 import { showSuccessToast, showConfirmDialog } from 'vant'
 import dayjs from 'dayjs'
 
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
 const router = useRouter()
 const userStore = useUserStore()
 

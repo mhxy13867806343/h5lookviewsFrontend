@@ -81,6 +81,9 @@ interface LoginForm {
 }
 
 // 响应式数据
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 const userStore = useUserStore()
 const router = useRouter()
 const loading = ref<boolean>(false)

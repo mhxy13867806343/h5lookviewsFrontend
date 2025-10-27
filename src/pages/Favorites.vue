@@ -232,6 +232,9 @@ interface TimeOption {
   value: string
 }
 
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
 const router = useRouter()
 
 // 响应式数据
