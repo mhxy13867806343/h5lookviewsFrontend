@@ -2,7 +2,7 @@
   <div class="settings-page">
     <!-- 顶部导航栏 -->
     <van-nav-bar
-      title="设置"
+      :title="t('settings.title')"
       left-arrow
       @click-left="handleBack"
       fixed
@@ -12,9 +12,9 @@
     <!-- 设置列表 -->
     <div class="settings-content">
       <!-- 账号信息 -->
-      <van-cell-group title="账号信息" inset>
+      <van-cell-group :title="t('settings.accountInfo')" inset>
         <van-cell 
-          title="个人信息" 
+          :title="t('settings.personalInfo')" 
           is-link 
           @click="router.push('/edit-profile')"
         >
@@ -23,7 +23,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="账号安全" 
+          :title="t('settings.accountSecurity')" 
           is-link
           @click="handleAccountSecurity"
         >
@@ -32,7 +32,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="隐私设置" 
+          :title="t('settings.privacySettings')" 
           is-link
           @click="handlePrivacySetting"
         >
@@ -43,9 +43,9 @@
       </van-cell-group>
 
       <!-- 通用设置 -->
-      <van-cell-group title="通用设置" inset>
+      <van-cell-group :title="t('settings.generalSettings')" inset>
         <van-cell 
-          title="浏览历史" 
+          :title="t('settings.viewHistory')" 
           is-link
           @click="router.push('/view-history')"
         >
@@ -54,7 +54,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="消息通知"
+          :title="t('settings.messageNotification')"
           is-link
           @click="router.push('/messages')"
         >
@@ -63,7 +63,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="夜间模式"
+          :title="t('settings.darkMode')"
         >
           <template #icon>
             <van-icon name="star-o" class="cell-icon" />
@@ -78,7 +78,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="语言设置" 
+          :title="t('settings.languageSettings')" 
           is-link
           :value="currentLanguage"
           @click="showLanguagePicker"
@@ -90,9 +90,9 @@
       </van-cell-group>
 
       <!-- 缓存与存储 -->
-      <van-cell-group title="缓存与存储" inset>
+      <van-cell-group :title="t('settings.cacheStorage')" inset>
         <van-cell 
-          title="缓存大小" 
+          :title="t('settings.cacheSize')" 
           :value="cacheSize"
         >
           <template #icon>
@@ -100,7 +100,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="清除缓存" 
+          :title="t('settings.clearCache')" 
           is-link
           @click="handleClearCache"
         >
@@ -111,9 +111,9 @@
       </van-cell-group>
 
       <!-- 帮助与反馈 -->
-      <van-cell-group title="帮助与反馈" inset>
+      <van-cell-group :title="t('settings.helpFeedback')" inset>
         <van-cell 
-          title="帮助中心" 
+          :title="t('settings.helpCenter')" 
           is-link
           @click="router.push('/help-center')"
         >
@@ -122,7 +122,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="意见反馈" 
+          :title="t('settings.feedback')" 
           is-link
           @click="router.push('/feedback')"
         >
@@ -131,7 +131,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="关于我们" 
+          :title="t('settings.aboutUs')" 
           is-link
           @click="showAbout"
         >
@@ -142,9 +142,9 @@
       </van-cell-group>
 
       <!-- 版本信息 -->
-      <van-cell-group title="版本信息" inset>
+      <van-cell-group :title="t('settings.versionInfo')" inset>
         <van-cell 
-          title="当前版本" 
+          :title="t('settings.currentVersion')" 
           :value="version"
           @click="handleVersionClick"
           clickable
@@ -154,7 +154,7 @@
           </template>
         </van-cell>
         <van-cell 
-          title="检查更新" 
+          :title="t('settings.checkUpdate')" 
           is-link
           @click="handleCheckUpdate"
         >
@@ -173,7 +173,7 @@
           @click="handleLogout"
           class="logout-button"
         >
-          退出登录
+          {{ t('settings.logout') }}
         </van-button>
       </div>
     </div>
@@ -182,7 +182,7 @@
     <van-action-sheet
       v-model:show="showLanguageSheet"
       :actions="languageActions"
-      cancel-text="取消"
+      :cancel-text="t('common.cancel')"
       close-on-click-action
       @select="onLanguageSelect"
     />
@@ -234,12 +234,15 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { showConfirmDialog, showSuccessToast, showToast, showDialog } from 'vant'
 import { useUserStore } from '../stores/store'
 import { appConfig } from '../config/app'
+import { SUPPORT_LOCALES, setLocale, getCurrentLocaleName, type Locale } from '../i18n'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 // 版本信息
 const version = ref<string>(appConfig.version)
@@ -249,8 +252,8 @@ const versionClickTimer = ref<number | null>(null)
 
 // 设置项
 const darkMode = ref<boolean>(false)
-const currentLanguage = ref<string>('简体中文')
-const cacheSize = ref<string>('计算中...')
+const currentLanguage = ref<string>(getCurrentLocaleName())
+const cacheSize = ref<string>(t('common.loading'))
 
 // 弹出层
 const showLanguageSheet = ref<boolean>(false)
@@ -259,7 +262,13 @@ const showAboutPopup = ref<boolean>(false)
 // 语言选项
 interface LanguageAction {
   name: string
-  value: string
+  value: Locale
+}
+
+const languageActions = ref<LanguageAction[]>(SUPPORT_LOCALES.map(locale => ({
+  name: locale.name,
+  value: locale.value
+})))
 }
 
 const languageActions = ref<LanguageAction[]>([
@@ -281,11 +290,11 @@ const onDarkModeChange = (value: boolean): void => {
   if (value) {
     root.classList.add('dark')
     root.setAttribute('data-theme', 'dark')
-    showToast('已开启夜间模式')
+    showToast(t('settings.darkModeOn'))
   } else {
     root.classList.remove('dark')
     root.removeAttribute('data-theme')
-    showToast('已关闭夜间模式')
+    showToast(t('settings.darkModeOff'))
   }
   
   // 保存设置到本地存储
@@ -303,9 +312,8 @@ const showLanguagePicker = (): void => {
 // 语言选择
 const onLanguageSelect = (action: LanguageAction): void => {
   currentLanguage.value = action.name
-  showSuccessToast(`已切换为${action.name}`)
-  // 保存设置到本地存储
-  localStorage.setItem('language', action.value)
+  setLocale(action.value)
+  showSuccessToast(t('settings.languageChanged', { lang: action.name }))
 }
 
 // 计算缓存大小
@@ -328,9 +336,9 @@ const calculateCacheSize = (): void => {
 // 清除缓存
 const handleClearCache = (): void => {
   showConfirmDialog({
-    title: '确认清除缓存',
-    message: '清除缓存后，部分数据需要重新加载，是否继续？',
-    confirmButtonText: '确认清除',
+    title: t('settings.clearCacheTitle'),
+    message: t('settings.clearCacheMessage'),
+    confirmButtonText: t('settings.confirmClear'),
     confirmButtonColor: '#ee0a24',
   }).then(() => {
     // 保留必要的数据
@@ -350,7 +358,7 @@ const handleClearCache = (): void => {
     
     // 重新计算缓存大小
     calculateCacheSize()
-    showSuccessToast('缓存已清除')
+    showSuccessToast(t('settings.cacheCleared'))
   }).catch(() => {
     // 用户取消
   })
@@ -375,27 +383,27 @@ const handleVersionClick = (): void => {
     versionClickCount.value = 0
     showDeveloperMode()
   } else if (versionClickCount.value === 5) {
-    showToast(`再点击 ${7 - versionClickCount.value} 次`)
+    showToast(t('settings.clickMore', { count: 7 - versionClickCount.value }))
   }
 }
 
 // 显示开发者模式
 const showDeveloperMode = (): void => {
   showDialog({
-    title: '🎉 开发者模式',
+    title: t('settings.developerMode'),
     message: `
-      恭喜发现彩蛋！
+      ${t('settings.easterEgg')}
       
-      版本信息：
-      - 应用版本: ${version.value}
-      - 更新时间: ${updateTime.value}
-      - 技术栈: Vue 3 + TypeScript
-      - UI框架: Vant 4
-      - 构建工具: Vite
+      ${t('settings.versionInfo')}:
+      - ${t('settings.currentVersion')}: ${version.value}
+      - ${t('settings.checkUpdate')}: ${updateTime.value}
+      - Tech Stack: Vue 3 + TypeScript
+      - UI Framework: Vant 4
+      - Build Tool: Vite
       
-      您是第 ${Math.floor(Math.random() * 1000)} 位发现彩蛋的用户！
+      You are the ${Math.floor(Math.random() * 1000)}th user to find this!
     `,
-    confirmButtonText: '太棒了',
+    confirmButtonText: t('settings.awesome'),
   }).then(() => {
     // 可以在这里添加开发者模式的特殊功能
   })
@@ -403,7 +411,7 @@ const showDeveloperMode = (): void => {
 
 // 检查更新
 const handleCheckUpdate = (): void => {
-  showToast('正在检查更新...')
+  showToast(t('settings.checkingUpdate'))
   
   // 模拟检查更新
   setTimeout(() => {
@@ -411,17 +419,17 @@ const handleCheckUpdate = (): void => {
     
     if (hasUpdate) {
       showConfirmDialog({
-        title: '发现新版本',
-        message: `发现新版本 v${parseFloat(version.value) + 0.1}\n\n更新内容：\n- 优化用户体验\n- 修复已知问题\n- 新增更多功能`,
-        confirmButtonText: '立即更新',
+        title: t('settings.updateFound'),
+        message: `${t('settings.updateFound')} v${parseFloat(version.value) + 0.1}\n\n${t('settings.updateMessage')}`,
+        confirmButtonText: t('settings.updateNow'),
       }).then(() => {
-        showToast('开始下载更新...')
+        showToast(t('settings.downloading'))
         // 实际项目中这里应该跳转到下载页面或触发更新流程
       }).catch(() => {
         // 用户取消更新
       })
     } else {
-      showSuccessToast('当前已是最新版本')
+      showSuccessToast(t('settings.latestVersion'))
     }
   }, 1500)
 }
@@ -457,15 +465,15 @@ const openGithub = (): void => {
 // 退出登录
 const handleLogout = (): void => {
   showConfirmDialog({
-    title: '确认退出',
-    message: '确定要退出登录吗？',
-    confirmButtonText: '确认退出',
+    title: t('settings.logout'),
+    message: t('settings.confirmLogout'),
+    confirmButtonText: t('settings.confirmLogoutBtn'),
     confirmButtonColor: '#ee0a24',
-    cancelButtonText: '取消',
+    cancelButtonText: t('common.cancel'),
   }).then(() => {
     // 执行退出登录逻辑
     userStore.logout()
-    showSuccessToast('已退出登录')
+    showSuccessToast(t('settings.logoutSuccess'))
     
     // 延迟跳转到登录页
     setTimeout(() => {
@@ -487,14 +495,8 @@ const loadSettings = (): void => {
     root.setAttribute('data-theme', 'dark')
   }
   
-  // 加载语言设置
-  const savedLanguage = localStorage.getItem('language')
-  if (savedLanguage) {
-    const language = languageActions.value.find(lang => lang.value === savedLanguage)
-    if (language) {
-      currentLanguage.value = language.name
-    }
-  }
+  // 加载语言设置（已由 i18n 自动处理）
+  currentLanguage.value = getCurrentLocaleName()
   
   // 计算缓存大小
   calculateCacheSize()
