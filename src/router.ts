@@ -133,6 +133,12 @@ const routes = [
     name: 'ChatList',
     component: () => import('./pages/ChatList.vue')
   },
+  // 浏览历史页面（不显示tabbar）
+  {
+    path: '/view-history',
+    name: 'ViewHistory',
+    component: () => import('./pages/ViewHistory.vue')
+  },
   // 404页面 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',
