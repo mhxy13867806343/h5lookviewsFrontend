@@ -6,6 +6,7 @@
     <van-tabbar v-model="active" @change="onTabChange">
       <van-tabbar-item icon="friends-o" to="/home">动态</van-tabbar-item>
       <van-tabbar-item icon="label-o" to="/category">分类</van-tabbar-item>
+      <van-tabbar-item icon="contact" to="/contacts">通讯录</van-tabbar-item>
       <van-tabbar-item icon="delete-o" to="/cart">回收站</van-tabbar-item>
       <van-tabbar-item icon="user-o" to="/profile">我的</van-tabbar-item>
     </van-tabbar>
@@ -27,8 +28,9 @@ const setActiveTab = (): void => {
   const path = route.path
   if (path === '/home') active.value = 0
   else if (path === '/category') active.value = 1
-  else if (path === '/cart') active.value = 2
-  else if (path === '/profile') active.value = 3
+  else if (path === '/contacts') active.value = 2
+  else if (path === '/cart') active.value = 3
+  else if (path === '/profile') active.value = 4
 }
 
 setActiveTab()

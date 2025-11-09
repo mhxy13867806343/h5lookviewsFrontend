@@ -46,6 +46,11 @@ const routes = [
         component: () => import('./pages/Profile.vue')
       },
       {
+        path: '/contacts',
+        name: 'Contacts',
+        component: () => import('./pages/Contacts.vue')
+      },
+      {
         path: '/note',
         name: 'Note',
         component: () => import('./pages/Note.vue')
@@ -99,6 +104,11 @@ const routes = [
     path: '/note/:id',
     name: 'NoteDetail',
     component: () => import('./pages/NoteDetail.vue')
+  },
+  {
+    path: '/contact/:id',
+    name: 'ContactDetail',
+    component: () => import('./pages/ContactDetail.vue')
   },
   // 消息相关页面（不显示tabbar）
   {
