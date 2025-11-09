@@ -1,0 +1,322 @@
+/**
+ * 夜间模式全局样式
+ */
+
+/* 根元素夜间模式 */
+:root[data-theme="dark"],
+html.dark {
+  /* 背景色 */
+  --background-color: #1a1a1a;
+  --background-color-light: #2a2a2a;
+  --background-color-lighter: #3a3a3a;
+  
+  /* 文字颜色 */
+  --text-color-primary: #e8e8e8;
+  --text-color-secondary: #b8b8b8;
+  --text-color-tertiary: #888888;
+  
+  /* 边框颜色 */
+  --border-color: #3a3a3a;
+  --border-color-light: #4a4a4a;
+  
+  /* 卡片背景 */
+  --card-background: #2a2a2a;
+  
+  /* 输入框背景 */
+  --input-background: #3a3a3a;
+  
+  /* 主题色 (保持不变) */
+  --primary-color: #1989fa;
+  --success-color: #07c160;
+  --warning-color: #ff976a;
+  --danger-color: #ee0a24;
+}
+
+/* 夜间模式下的全局样式 */
+html.dark,
+html.dark body {
+  background-color: var(--background-color);
+  color: var(--text-color-primary);
+}
+
+/* Vant 组件夜间模式覆盖 */
+html.dark {
+  /* 导航栏 */
+  .van-nav-bar {
+    background-color: var(--background-color-light);
+    
+    .van-nav-bar__title,
+    .van-nav-bar__text {
+      color: var(--text-color-primary);
+    }
+    
+    .van-icon {
+      color: var(--text-color-primary);
+    }
+  }
+  
+  /* 单元格 */
+  .van-cell {
+    background-color: var(--card-background);
+    color: var(--text-color-primary);
+    
+    &::after {
+      border-color: var(--border-color);
+    }
+    
+    .van-cell__title,
+    .van-cell__value,
+    .van-cell__label {
+      color: var(--text-color-primary);
+    }
+    
+    .van-cell__label {
+      color: var(--text-color-secondary);
+    }
+  }
+  
+  /* 单元格组 */
+  .van-cell-group {
+    background-color: var(--card-background);
+    
+    .van-cell-group__title {
+      color: var(--text-color-secondary);
+    }
+  }
+  
+  /* 搜索框 */
+  .van-search {
+    background-color: var(--background-color-light);
+    
+    .van-search__content {
+      background-color: var(--input-background);
+    }
+    
+    input {
+      color: var(--text-color-primary);
+      
+      &::placeholder {
+        color: var(--text-color-tertiary);
+      }
+    }
+  }
+  
+  /* 输入框 */
+  .van-field__control {
+    color: var(--text-color-primary);
+    background-color: var(--input-background);
+    
+    &::placeholder {
+      color: var(--text-color-tertiary);
+    }
+  }
+  
+  /* 标签 */
+  .van-tag {
+    &--default {
+      background-color: var(--background-color-lighter);
+      color: var(--text-color-primary);
+    }
+  }
+  
+  /* 按钮 */
+  .van-button {
+    &--default {
+      background-color: var(--background-color-lighter);
+      color: var(--text-color-primary);
+      border-color: var(--border-color);
+    }
+  }
+  
+  /* 弹出层 */
+  .van-popup {
+    background-color: var(--card-background);
+    color: var(--text-color-primary);
+  }
+  
+  /* 对话框 */
+  .van-dialog {
+    background-color: var(--card-background);
+    
+    .van-dialog__header,
+    .van-dialog__message {
+      color: var(--text-color-primary);
+    }
+  }
+  
+  /* 动作面板 */
+  .van-action-sheet {
+    background-color: var(--card-background);
+    
+    .van-action-sheet__item,
+    .van-action-sheet__cancel {
+      background-color: var(--card-background);
+      color: var(--text-color-primary);
+      
+      &::after {
+        border-color: var(--border-color);
+      }
+    }
+    
+    .van-action-sheet__description {
+      color: var(--text-color-secondary);
+    }
+  }
+  
+  /* 标签页 */
+  .van-tabs {
+    background-color: var(--background-color-light);
+    
+    .van-tabs__nav {
+      background-color: var(--background-color-light);
+    }
+    
+    .van-tab {
+      color: var(--text-color-secondary);
+      
+      &--active {
+        color: var(--primary-color);
+      }
+    }
+    
+    .van-tabs__line {
+      background-color: var(--primary-color);
+    }
+  }
+  
+  /* 折叠面板 */
+  .van-collapse-item {
+    .van-collapse-item__title {
+      background-color: var(--card-background);
+      color: var(--text-color-primary);
+      
+      &::after {
+        border-color: var(--border-color);
+      }
+    }
+    
+    .van-collapse-item__content {
+      background-color: var(--background-color-light);
+      color: var(--text-color-primary);
+    }
+  }
+  
+  /* 列表 */
+  .van-list {
+    background-color: var(--background-color);
+  }
+  
+  /* 下拉刷新 */
+  .van-pull-refresh {
+    background-color: var(--background-color);
+  }
+  
+  /* 空状态 */
+  .van-empty__description {
+    color: var(--text-color-secondary);
+  }
+  
+  /* 徽标 */
+  .van-badge--fixed {
+    background-color: var(--danger-color);
+  }
+  
+  /* 通知栏 */
+  .van-notice-bar {
+    background-color: var(--background-color-lighter);
+    color: var(--text-color-primary);
+  }
+  
+  /* 步进器 */
+  .van-stepper {
+    .van-stepper__input {
+      background-color: var(--input-background);
+      color: var(--text-color-primary);
+    }
+  }
+  
+  /* 滑动单元格 */
+  .van-swipe-cell {
+    .van-swipe-cell__wrapper {
+      background-color: var(--card-background);
+    }
+  }
+  
+  /* 图片上传 */
+  .van-uploader__upload {
+    background-color: var(--background-color-lighter);
+  }
+  
+  /* 单选/复选框 */
+  .van-radio__label,
+  .van-checkbox__label {
+    color: var(--text-color-primary);
+  }
+  
+  /* 分割线 */
+  .van-divider {
+    color: var(--text-color-secondary);
+    border-color: var(--border-color);
+  }
+}
+
+/* 页面级夜间模式 */
+html.dark {
+  /* 通用页面容器 */
+  .page-container,
+  .content-wrapper {
+    background-color: var(--background-color);
+    color: var(--text-color-primary);
+  }
+  
+  /* 卡片 */
+  .card,
+  .info-card,
+  .item-card {
+    background-color: var(--card-background);
+    border-color: var(--border-color);
+    
+    .card-title,
+    .card-content {
+      color: var(--text-color-primary);
+    }
+    
+    .card-desc,
+    .card-meta {
+      color: var(--text-color-secondary);
+    }
+  }
+  
+  /* 列表项 */
+  .list-item {
+    background-color: var(--card-background);
+    border-color: var(--border-color);
+    
+    .item-title {
+      color: var(--text-color-primary);
+    }
+    
+    .item-desc,
+    .item-meta {
+      color: var(--text-color-secondary);
+    }
+  }
+  
+  /* 表单 */
+  input,
+  textarea,
+  select {
+    background-color: var(--input-background);
+    color: var(--text-color-primary);
+    border-color: var(--border-color);
+    
+    &::placeholder {
+      color: var(--text-color-tertiary);
+    }
+  }
+}
+
+/* 平滑过渡 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

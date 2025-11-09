@@ -55,17 +55,11 @@
         </van-cell>
         <van-cell 
           title="消息通知"
+          is-link
+          @click="router.push('/messages')"
         >
           <template #icon>
             <van-icon name="bell" class="cell-icon" />
-          </template>
-          <template #right-icon>
-            <van-switch 
-              v-model="notificationEnabled" 
-              size="20" 
-              @change="onNotificationChange"
-              @click.stop
-            />
           </template>
         </van-cell>
         <van-cell 
@@ -121,7 +115,7 @@
         <van-cell 
           title="帮助中心" 
           is-link
-          @click="handleHelpCenter"
+          @click="router.push('/help-center')"
         >
           <template #icon>
             <van-icon name="question-o" class="cell-icon" />
@@ -130,7 +124,7 @@
         <van-cell 
           title="意见反馈" 
           is-link
-          @click="handleFeedback"
+          @click="router.push('/feedback')"
         >
           <template #icon>
             <van-icon name="chat-o" class="cell-icon" />
@@ -254,7 +248,6 @@ const versionClickCount = ref<number>(0)
 const versionClickTimer = ref<number | null>(null)
 
 // 设置项
-const notificationEnabled = ref<boolean>(true)
 const darkMode = ref<boolean>(false)
 const currentLanguage = ref<string>('简体中文')
 const cacheSize = ref<string>('计算中...')
@@ -283,26 +276,23 @@ const handleBack = (): void => {
 
 // 夜间模式切换
 const onDarkModeChange = (value: boolean): void => {
+  const root = document.documentElement
+  
   if (value) {
-    document.documentElement.classList.add('dark')
+    root.classList.add('dark')
+    root.setAttribute('data-theme', 'dark')
     showToast('已开启夜间模式')
   } else {
-    document.documentElement.classList.remove('dark')
+    root.classList.remove('dark')
+    root.removeAttribute('data-theme')
     showToast('已关闭夜间模式')
   }
+  
   // 保存设置到本地存储
   localStorage.setItem('darkMode', String(value))
-}
-
-// 消息通知切换
-const onNotificationChange = (value: boolean): void => {
-  if (value) {
-    showToast('已开启消息通知')
-  } else {
-    showToast('已关闭消息通知')
-  }
-  // 保存设置到本地存储
-  localStorage.setItem('notificationEnabled', String(value))
+  
+  // 触发全局主题变化事件
+  window.dispatchEvent(new CustomEvent('themeChange', { detail: { dark: value } }))
 }
 
 // 显示语言选择器
@@ -454,24 +444,6 @@ const handlePrivacySetting = (): void => {
   })
 }
 
-// 帮助中心
-const handleHelpCenter = (): void => {
-  showDialog({
-    title: '帮助中心',
-    message: '常见问题：\n\n1. 如何发布笔记？\n点击底部"+"按钮即可发布\n\n2. 如何收藏笔记？\n点击笔记右下角收藏图标\n\n3. 如何查看浏览历史？\n在设置页面点击"浏览历史"\n\n更多问题请联系客服',
-    confirmButtonText: '知道了',
-  })
-}
-
-// 意见反馈
-const handleFeedback = (): void => {
-  showDialog({
-    title: '意见反馈',
-    message: '感谢您的反馈！\n\n您可以通过以下方式联系我们：\n- 邮箱：feedback@lookviews.com\n- 微信：lookviews_support\n- QQ群：123456789\n\n我们会认真对待每一条反馈',
-    confirmButtonText: '知道了',
-  })
-}
-
 // 显示关于我们
 const showAbout = (): void => {
   showAboutPopup.value = true
@@ -510,7 +482,9 @@ const loadSettings = (): void => {
   const savedDarkMode = localStorage.getItem('darkMode')
   if (savedDarkMode === 'true') {
     darkMode.value = true
-    document.documentElement.classList.add('dark')
+    const root = document.documentElement
+    root.classList.add('dark')
+    root.setAttribute('data-theme', 'dark')
   }
   
   // 加载语言设置
@@ -520,12 +494,6 @@ const loadSettings = (): void => {
     if (language) {
       currentLanguage.value = language.name
     }
-  }
-  
-  // 加载通知设置
-  const savedNotification = localStorage.getItem('notificationEnabled')
-  if (savedNotification !== null) {
-    notificationEnabled.value = savedNotification === 'true'
   }
   
   // 计算缓存大小

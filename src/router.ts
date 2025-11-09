@@ -145,6 +145,18 @@ const routes = [
     name: 'Settings',
     component: () => import('./pages/Settings.vue')
   },
+  // 帮助中心页面（不显示tabbar）
+  {
+    path: '/help-center',
+    name: 'HelpCenter',
+    component: () => import('./pages/HelpCenter.vue')
+  },
+  // 意见反馈页面（不显示tabbar）
+  {
+    path: '/feedback',
+    name: 'Feedback',
+    component: () => import('./pages/Feedback.vue')
+  },
   // 404页面 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',
