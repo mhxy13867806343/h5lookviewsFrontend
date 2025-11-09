@@ -25,7 +25,7 @@
         <van-cell 
           title="账号安全" 
           is-link
-          @click="showToast('功能开发中')"
+          @click="handleAccountSecurity"
         >
           <template #icon>
             <van-icon name="shield-o" class="cell-icon" />
@@ -34,7 +34,7 @@
         <van-cell 
           title="隐私设置" 
           is-link
-          @click="showToast('功能开发中')"
+          @click="handlePrivacySetting"
         >
           <template #icon>
             <van-icon name="eye-o" class="cell-icon" />
@@ -54,25 +54,33 @@
           </template>
         </van-cell>
         <van-cell 
-          title="消息通知" 
-          is-link
-          @click="showToast('功能开发中')"
+          title="消息通知"
         >
           <template #icon>
             <van-icon name="bell" class="cell-icon" />
           </template>
           <template #right-icon>
-            <van-switch v-model="notificationEnabled" size="20" />
+            <van-switch 
+              v-model="notificationEnabled" 
+              size="20" 
+              @change="onNotificationChange"
+              @click.stop
+            />
           </template>
         </van-cell>
         <van-cell 
-          title="夜间模式" 
+          title="夜间模式"
         >
           <template #icon>
             <van-icon name="star-o" class="cell-icon" />
           </template>
           <template #right-icon>
-            <van-switch v-model="darkMode" size="20" @change="onDarkModeChange" />
+            <van-switch 
+              v-model="darkMode" 
+              size="20" 
+              @change="onDarkModeChange"
+              @click.stop
+            />
           </template>
         </van-cell>
         <van-cell 
@@ -113,7 +121,7 @@
         <van-cell 
           title="帮助中心" 
           is-link
-          @click="showToast('功能开发中')"
+          @click="handleHelpCenter"
         >
           <template #icon>
             <van-icon name="question-o" class="cell-icon" />
@@ -122,7 +130,7 @@
         <van-cell 
           title="意见反馈" 
           is-link
-          @click="showToast('功能开发中')"
+          @click="handleFeedback"
         >
           <template #icon>
             <van-icon name="chat-o" class="cell-icon" />
@@ -286,6 +294,17 @@ const onDarkModeChange = (value: boolean): void => {
   localStorage.setItem('darkMode', String(value))
 }
 
+// 消息通知切换
+const onNotificationChange = (value: boolean): void => {
+  if (value) {
+    showToast('已开启消息通知')
+  } else {
+    showToast('已关闭消息通知')
+  }
+  // 保存设置到本地存储
+  localStorage.setItem('notificationEnabled', String(value))
+}
+
 // 显示语言选择器
 const showLanguagePicker = (): void => {
   showLanguageSheet.value = true
@@ -415,6 +434,42 @@ const handleCheckUpdate = (): void => {
       showSuccessToast('当前已是最新版本')
     }
   }, 1500)
+}
+
+// 账号安全
+const handleAccountSecurity = (): void => {
+  showDialog({
+    title: '账号安全',
+    message: '账号安全设置功能开发中\n\n将包含以下功能：\n- 修改密码\n- 绑定手机号\n- 绑定邮箱\n- 二步验证\n- 登录设备管理',
+    confirmButtonText: '知道了',
+  })
+}
+
+// 隐私设置
+const handlePrivacySetting = (): void => {
+  showDialog({
+    title: '隐私设置',
+    message: '隐私设置功能开发中\n\n将包含以下功能：\n- 谁可以看我的主页\n- 谁可以评论我的内容\n- 黑名单管理\n- 屏蔽设置',
+    confirmButtonText: '知道了',
+  })
+}
+
+// 帮助中心
+const handleHelpCenter = (): void => {
+  showDialog({
+    title: '帮助中心',
+    message: '常见问题：\n\n1. 如何发布笔记？\n点击底部"+"按钮即可发布\n\n2. 如何收藏笔记？\n点击笔记右下角收藏图标\n\n3. 如何查看浏览历史？\n在设置页面点击"浏览历史"\n\n更多问题请联系客服',
+    confirmButtonText: '知道了',
+  })
+}
+
+// 意见反馈
+const handleFeedback = (): void => {
+  showDialog({
+    title: '意见反馈',
+    message: '感谢您的反馈！\n\n您可以通过以下方式联系我们：\n- 邮箱：feedback@lookviews.com\n- 微信：lookviews_support\n- QQ群：123456789\n\n我们会认真对待每一条反馈',
+    confirmButtonText: '知道了',
+  })
 }
 
 // 显示关于我们
