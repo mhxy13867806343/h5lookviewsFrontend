@@ -139,6 +139,12 @@ const routes = [
     name: 'ViewHistory',
     component: () => import('./pages/ViewHistory.vue')
   },
+  // 设置页面（不显示tabbar）
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('./pages/Settings.vue')
+  },
   // 404页面 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',
