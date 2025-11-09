@@ -40,7 +40,7 @@ export const addViewHistory = (item: Omit<ViewHistoryItem, 'id' | 'visitTime'>):
       // 如果不存在，添加新记录
       const newItem: ViewHistoryItem = {
         ...item,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
         visitTime: new Date().toISOString()
       }
       history.unshift(newItem)
