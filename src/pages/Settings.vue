@@ -232,7 +232,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showConfirmDialog, showSuccessToast, showToast, showDialog } from 'vant'
@@ -269,14 +269,6 @@ const languageActions = ref<LanguageAction[]>(SUPPORT_LOCALES.map(locale => ({
   name: locale.name,
   value: locale.value
 })))
-}
-
-const languageActions = ref<LanguageAction[]>([
-  { name: '简体中文', value: 'zh-CN' },
-  { name: '繁體中文', value: 'zh-TW' },
-  { name: 'English', value: 'en-US' },
-  { name: '日本語', value: 'ja-JP' },
-])
 
 // 方法
 const handleBack = (): void => {
