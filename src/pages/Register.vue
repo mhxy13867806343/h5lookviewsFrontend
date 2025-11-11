@@ -106,6 +106,7 @@
 <script lang="ts" setup>
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
+import { useAuth } from '@/hooks/useAuth'
 
 // 定义表单类型
 interface RegisterForm {
@@ -121,6 +122,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const { register } = useAuth()
 const router = useRouter()
 const loading = ref<boolean>(false)
 const agreeTerms = ref<boolean>(false)
@@ -145,22 +147,18 @@ const onSubmit = async (values: RegisterForm): Promise<void> => {
   }
 
   loading.value = true
-  
-  // 模拟注册请求
-  setTimeout(() => {
-    // 模拟注册成功
-    userStore.setUserInfo({
-      id: Date.now(),
-      username: values.username,
-      email: values.email,
-      phone: values.phone
-    })
-    userStore.setToken('mock-token-' + Date.now())
-    
+  const ok = await register({
+    username: values.username,
+    password: values.password,
+    confirmPassword: values.confirmPassword,
+    email: values.email,
+    phone: values.phone
+  })
+  loading.value = false
+  if (ok) {
+    // useAuth.register 内已跳转到登录页
     showSuccessToast('注册成功')
-    router.push('/home')
-    loading.value = false
-  }, 1500)
+  }
 }
 
 const showTerms = (): void => {

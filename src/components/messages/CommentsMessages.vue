@@ -110,22 +110,28 @@
 
 <script lang="ts" setup>
 import { formatRelativeTime } from '../../utils/index'
+import { messageApi } from '@/api'
+import { showFailToast } from 'vant'
+import type { Message as BackendMessage } from '@/types/api'
 
 // 类型定义
+type CommentType = 'comment' | 'reply' | 'mention'
+
 interface CommentMessage {
   id: string
-  type: 'comment' | 'reply' | 'mention'
+  commentType: CommentType
   user: {
     id: string
     nickname: string
     avatar: string
     isVip?: boolean
   }
-  content: string
+  commentContent: string
   createTime: string
   targetType: 'post' | 'note' | 'comment'
-  targetTitle: string
   targetId: string
+  targetContent?: string
+  targetImage?: string | null
 }
 
 // 事件定义
@@ -143,8 +149,8 @@ const messages = ref<CommentMessage[]>([])
 const currentPage = ref<number>(1)
 
 // 获取评论类型图标
-const getCommentTypeIcon = (type: CommentMessage['type']): string => {
-  const icons: Record<CommentMessage['type'], string> = {
+const getCommentTypeIcon = (type: CommentType): string => {
+  const icons: Record<CommentType, string> = {
     comment: 'comment-o',
     reply: 'chat-o',
     mention: 'at'
@@ -153,8 +159,8 @@ const getCommentTypeIcon = (type: CommentMessage['type']): string => {
 }
 
 // 获取评论动作文本
-const getCommentActionText = (type: CommentMessage['type']): string => {
-  const actions: Record<CommentMessage['type'], string> = {
+const getCommentActionText = (type: CommentType): string => {
+  const actions: Record<CommentType, string> = {
     comment: '评论了你的',
     reply: '回复了你的评论',
     mention: '在评论中提到了你'
@@ -196,71 +202,30 @@ const loadMessages = async (page = 1) => {
   }
 
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // 模拟评论消息数据
-    const mockMessages = [
-      {
-        id: `comment_${page}_1`,
-        commentType: 'comment',
-        user: {
-          id: 'user001',
-          nickname: '热心网友',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        commentContent: '写得很好，学到了很多！',
-        targetType: 'note',
-        targetId: 'note001',
-        targetContent: '如何提高工作效率的10个小技巧',
-        targetImage: null,
-        createTime: new Date(Date.now() - 1 * 60 * 60 * 1000)
-      },
-      {
-        id: `comment_${page}_2`,
-        commentType: 'reply',
-        user: {
-          id: 'user002',
-          nickname: '小王同学',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        commentContent: '确实如此，我也有同样的感受',
-        targetType: 'post',
-        targetId: 'post001',
-        targetContent: '今天的日落真美',
-        targetImage: 'https://img.yzcdn.cn/vant/cat.jpeg',
-        createTime: new Date(Date.now() - 3 * 60 * 60 * 1000)
-      },
-      {
-        id: `comment_${page}_3`,
-        commentType: 'mention',
-        user: {
-          id: 'user003',
-          nickname: '设计师小李',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        commentContent: '@你 这个设计思路很棒，可以参考一下',
-        targetType: 'post',
-        targetId: 'post002',
-        targetContent: '分享一个UI设计作品',
-        targetImage: 'https://img.yzcdn.cn/vant/cat.jpeg',
-        createTime: new Date(Date.now() - 5 * 60 * 60 * 1000)
-      }
-    ]
+    const res = await messageApi.getMessages('comments', { page, pageSize: 10 })
+    const list = (res.data.list || []).map((m: BackendMessage) => ({
+      id: m.id,
+      commentType: 'comment' as CommentType,
+      user: m.user,
+      commentContent: m.content,
+      createTime: m.createTime,
+      targetType: m.targetType || 'comment',
+      targetId: m.targetId || '',
+      targetContent: '',
+      targetImage: null
+    }))
 
     if (page === 1) {
-      messages.value = mockMessages
+      messages.value = list
     } else {
-      messages.value.push(...mockMessages)
+      messages.value.push(...list)
     }
 
-    // 模拟分页结束
-    if (page >= 3) {
-      finished.value = true
-    }
+    finished.value = res.data.page * res.data.pageSize >= res.data.total || list.length < res.data.pageSize
 
   } catch (error) {
     console.error('加载评论消息失败:', error)
+    showFailToast('加载评论消息失败')
   } finally {
     loading.value = false
     loadingMore.value = false
@@ -276,15 +241,27 @@ const loadMore = () => {
 }
 
 // 删除单条消息
-const removeItem = (id) => {
-  messages.value = messages.value.filter(item => item.id !== id)
+const removeItem = async (id: string) => {
+  try {
+    await messageApi.deleteMessage(id)
+    messages.value = messages.value.filter(item => item.id !== id)
+  } catch (error) {
+    console.error('删除评论消息失败:', error)
+    showFailToast('删除失败')
+  }
 }
 
 // 清空所有消息
-const clearAll = () => {
-  messages.value = []
-  currentPage.value = 1
-  finished.value = false
+const clearAll = async () => {
+  try {
+    await messageApi.clearMessages('comments')
+    messages.value = []
+    currentPage.value = 1
+    finished.value = false
+  } catch (error) {
+    console.error('清空评论消息失败:', error)
+    showFailToast('清空失败')
+  }
 }
 
 // 数据是否已加载

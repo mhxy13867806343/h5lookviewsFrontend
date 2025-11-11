@@ -213,10 +213,11 @@ import { useShare } from '../hooks/useShare'
 import { useReport } from '../hooks/useReport'
 import { useComment } from '../hooks/useComment'
 import { useBlock } from '../hooks/useBlock'
-import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
+import { showSuccessToast, showConfirmDialog, showImagePreview, showToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
+import { noteApi } from '@/api'
 
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -226,6 +227,7 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const noteId = route.params.id
+const noteIdStr = Array.isArray(noteId) ? noteId[0] : String(noteId)
 
 // 类型定义
 interface Author {
@@ -409,17 +411,19 @@ const handleCollect = async (): Promise<void> => {
   
   collectLoading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    if (noteInfo.value.isCollected) {
+    if (noteInfo.value?.isCollected) {
+      await noteApi.uncollectNote(noteIdStr)
       noteInfo.value.isCollected = false
       noteInfo.value.collectsCount = Math.max(0, (noteInfo.value.collectsCount || 1) - 1)
       showSuccessToast('已取消收藏')
     } else {
+      await noteApi.collectNote(noteIdStr)
       noteInfo.value.isCollected = true
-      noteInfo.value.collectsCount = (noteInfo.value.collectsCount || 0) + 1
+      noteInfo.value.collectsCount = (noteInfo.value.collectsCount || 0) - 0 + 1
       showSuccessToast('收藏成功')
     }
+  } catch (e: any) {
+    showFailToast(e?.message || '操作失败')
   } finally {
     collectLoading.value = false
   }
@@ -478,90 +482,60 @@ const formatTime = (time: string): string => {
   return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 
-// 初始化数据
-const initNoteData = (): void => {
-  // 模拟笔记详情数据
-  noteInfo.value = {
-    id: noteId,
-    title: '如何制作美味的意大利面',
-    author: {
-      id: 'user123',
-      nickname: '美食达人小王',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-    },
-    content: `
-      <p>今天给大家分享一个制作美味意大利面的方法，这是我在意大利学到的正宗做法。</p>
-      
-      <h3>准备材料：</h3>
-      <ul>
-        <li>意大利面条 200g</li>
-        <li>番茄酱 3大勺</li>
-        <li>大蒜 2瓣</li>
-        <li>洋葱 半个</li>
-        <li>橄榄油 适量</li>
-        <li>帕尔马干酪 适量</li>
-        <li>罗勒叶 几片</li>
-      </ul>
-      
-      <h3>制作步骤：</h3>
-      <ol>
-        <li>将水烧开，加入适量盐，下入意大利面条煮8-10分钟至软硬适中</li>
-        <li>热锅下橄榄油，爆香蒜蓉和洋葱丝</li>
-        <li>加入番茄酱炒匀，调味</li>
-        <li>将煮好的面条加入锅中，快速翻炒均匀</li>
-        <li>撒上帕尔马干酪和罗勒叶即可</li>
-      </ol>
-      
-      <p>这样做出来的意大利面口感丰富，酸甜适中，非常适合家庭制作。大家可以根据自己的喜好调整配料。</p>
-    `,
-    tags: ['美食', '意大利面', '家常菜', '烹饪技巧'],
-    images: [
-      'https://img.yzcdn.cn/vant/cat.jpeg',
-      'https://img.yzcdn.cn/vant/cat.jpeg'
-    ],
-    location: '上海·浦东新区',
-    category: '美食烹饪',
-    createTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    likesCount: 128,
-    commentsCount: 23,
-    collectsCount: 45,
-    viewsCount: 856,
-    isLiked: false,
-    isCollected: false
-  }
-  
-  // 模拟相关笔记
-  relatedNotes.value = [
-    {
-      id: 'note2',
-      title: '法式焗蜗牛的制作方法',
-      summary: '正宗法式料理，在家也能做',
-      cover: 'https://img.yzcdn.cn/vant/cat.jpeg',
+// 加载笔记详情
+const loadNoteDetail = async (): Promise<void> => {
+  try {
+    const res = await noteApi.getNoteDetail(noteIdStr)
+    noteInfo.value = {
+      id: res.id,
+      title: res.title,
+      content: res.content || '',
+      images: res.images || [],
+      tags: res.tags || [],
+      category: res.category || '',
       author: {
-        nickname: '法式料理师傅'
+        id: res.user?.id || res.userId,
+        nickname: res.user?.nickname || '',
+        avatar: res.user?.avatar || ''
       },
-      likesCount: 89
-    },
-    {
-      id: 'note3',
-      title: '如何挑选新鲜的海鲜',
-      summary: '海鲜挑选的小技巧分享',
-      cover: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      author: {
-        nickname: '海鲜达人'
-      },
-      likesCount: 156
+      createTime: res.createTime,
+      likesCount: res.likeCount || 0,
+      commentsCount: undefined,
+      collectsCount: res.collectCount || 0,
+      viewsCount: undefined,
+      isLiked: !!res.isLiked,
+      isCollected: !!res.isCollected
     }
-  ]
-  
-
-  
-  // 模拟关注状态
-  isFollowed.value = Math.random() > 0.5
+  } catch (e) {
+    showFailToast('加载笔记失败')
+  }
 }
 
-onMounted(() => {
-  initNoteData()
+// 加载相关笔记
+const loadRelatedNotes = async (): Promise<void> => {
+  try {
+    const page = await noteApi.getNotes({ page: 1, pageSize: 5, category: noteInfo.value?.category || undefined })
+    relatedNotes.value = (page?.list || [])
+      .filter(n => n.id !== noteIdStr)
+      .map(n => ({
+        id: n.id,
+        title: n.title,
+        summary: (n.content || '').slice(0, 80),
+        cover: (n.images && n.images.length > 0) ? n.images[0] : '',
+        author: { nickname: n.user?.nickname || '' },
+        likesCount: n.likeCount || 0
+      }))
+  } catch (e) {
+    // 保持静默，相关笔记非关键路径
+  }
+}
+
+onMounted(async () => {
+  await loadNoteDetail()
+  await loadRelatedNotes()
+  try {
+    await getComments()
+  } catch {}
 })
 </script>
 

@@ -139,6 +139,7 @@
 
 <script lang="ts" setup>
 import { showSuccessToast, showFailToast, showConfirmDialog } from 'vant'
+import { noteApi, uploadApi } from '@/api'
 
 // 类型定义
 interface LocationOption {
@@ -211,8 +212,25 @@ const goBack = () => {
   }
 }
 
-const afterRead = (file: any): void => {
-  console.log('上传图片:', file)
+const afterRead = async (file: any): Promise<void> => {
+  try {
+    const items = Array.isArray(file) ? file : [file]
+    for (const item of items) {
+      const f: File | undefined = item?.file || item
+      if (!f) continue
+      const res = await uploadApi.uploadImage(f)
+      const url = (res as any)?.url
+      if (url) {
+        // 更新当前项和列表
+        item.url = url
+        // 兼容 v-model 列表
+        imageList.value.push({ url, file: f })
+      }
+    }
+    showSuccessToast('图片上传成功')
+  } catch (e) {
+    showFailToast('图片上传失败')
+  }
 }
 
 const beforeDelete = (file: any, detail: any): Promise<boolean> => {
@@ -255,9 +273,22 @@ const publishNote = async (): Promise<void> => {
   publishing.value = true
   
   try {
-    // 模拟发布过程
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
+    // 构造发布数据
+    const title = noteContent.value.trim().slice(0, 20)
+    const categoryCodeMap: Record<string, string> = {
+      '生活随记': 'life',
+      '工作学习': 'study',
+      '美食分享': 'food',
+      '旅行游记': 'travel'
+    }
+    const payload = {
+      title: title || '随记',
+      content: noteContent.value.trim(),
+      images: imageList.value.map(i => i.url).filter(Boolean),
+      category: selectedCategory.value ? (categoryCodeMap[selectedCategory.value.name] || selectedCategory.value.name) : 'life',
+      isPublic: visibility.value === 'public'
+    }
+    await noteApi.createNote(payload)
     showSuccessToast(isTextOnlyMode.value ? '快捷发布成功' : '发布成功')
     router.push('/home')
   } catch (error) {

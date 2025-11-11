@@ -122,22 +122,6 @@
       @submit="submitReport"
       @cancel="showReportTypeDialog = false"
     />
-=======
-    <!-- 更多操作面板 -->
-    <van-action-sheet
-      v-model:show="showActionSheet"
-      :actions="moreActions"
-      @select="onActionSelect"
-    />
-
-    <!-- 举报对话框 -->
-    <ReportDialog
-      v-model:show="showReportTypeDialog"
-      :report-types="reportTypes"
-      :loading="reportLoading"
-      @submit="handleReportSubmit"
-      @cancel="handleReportCancel"
-    />
 
     <!-- 评论弹窗 -->
     <van-popup v-model:show="showCommentPopup" position="bottom" :style="{ height: '70%' }">
@@ -160,10 +144,11 @@
 </template>
 
 <script lang="ts" setup>
-import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog } from 'vant'
+import { showSuccessToast, showImagePreview, showDialog, showConfirmDialog, showFailToast } from 'vant'
 import { useShare } from '../hooks/useShare'
 import { useReport } from '../hooks/useReport'
 import { useComment } from '../hooks/useComment'
+import { postApi } from '@/api'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
@@ -243,61 +228,33 @@ interface HomeNote {
   isLiked: boolean
 }
 
-// 模拟笔记数据
-const notes = ref<HomeNote[]>([
-  {
-    id: 1,
-    userId: 'user001',
-    username: '小明',
-    avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-    content: '今天天气真好，出去走走心情都变好了！生活中总有很多美好的瞬间值得记录。',
-    images: [],
-    location: '北京·朝阳公园',
-    createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    likeCount: 12,
-    commentCount: 3,
-    isLiked: false
-  },
-  {
-    id: 2,
-    userId: 'user002',
-    username: '小红',
-    avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-    content: '今天学会了一道新菜，味道还不错！分享给大家～',
-    images: ['https://img.yzcdn.cn/vant/cat.jpeg'],
-    location: '上海·徐汇区',
-    createTime: new Date(Date.now() - 5 * 60 * 60 * 1000),
-    likeCount: 8,
-    commentCount: 5,
-    isLiked: true
-  },
-  {
-    id: 3,
-    userId: 'user003',
-    username: '阿强',
-    avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-    content: '工作再忙也要记得照顾好自己，健康最重要！',
-    images: [],
-    location: '深圳·南山区',
-    createTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    likeCount: 15,
-    commentCount: 2,
-    isLiked: false
-  },
-  {
-    id: 4,
-    userId: 'user004',
-    username: '小李',
-    avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-    content: '周末读了一本好书，推荐给大家。书中有句话特别喜欢：生活不只是眼前的苟且，还有诗和远方。',
-    images: ['https://img.yzcdn.cn/vant/cat.jpeg', 'https://img.yzcdn.cn/vant/cat.jpeg'],
-    location: '广州·天河区',
-    createTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    likeCount: 20,
-    commentCount: 8,
-    isLiked: true
+// 动态数据
+const notes = ref<HomeNote[]>([])
+
+// 加载动态列表
+const fetchPosts = async (keyword?: string) => {
+  try {
+    loading.value = true
+    const res = await postApi.getPosts({ page: 1, pageSize: 20, keyword })
+    notes.value = (res.list || []).map(p => ({
+      id: Number(p.id),
+      userId: p.user?.id || p.userId,
+      username: p.user?.nickname || '',
+      avatar: p.user?.avatar || '',
+      content: p.content,
+      images: p.images || [],
+      location: '',
+      createTime: new Date(p.createTime),
+      likeCount: p.likeCount || 0,
+      commentCount: p.commentCount || 0,
+      isLiked: !!p.isLiked
+    }))
+  } catch (e) {
+    showFailToast('加载动态失败')
+  } finally {
+    loading.value = false
   }
-])
+}
 
 // 搜索过滤
 const filteredNotes = computed(() => {
@@ -363,15 +320,29 @@ const handleTouchEnd = () => {
 }
 
 // 搜索
-const onSearch = (value) => {
-  showSuccessToast(`搜索: ${value}`)
+const onSearch = async (value) => {
+  await fetchPosts(value)
 }
 
 // 点赞
-const toggleLike = (note) => {
-  note.isLiked = !note.isLiked
-  note.likeCount += note.isLiked ? 1 : -1
-  showSuccessToast(note.isLiked ? '已点赞' : '已取消点赞')
+const toggleLike = async (note) => {
+  try {
+    if (!note.id) return
+    const idStr = String(note.id)
+    if (note.isLiked) {
+      await postApi.unlikePost(idStr)
+      note.isLiked = false
+      note.likeCount = Math.max(0, (note.likeCount || 1) - 1)
+      showSuccessToast('已取消点赞')
+    } else {
+      await postApi.likePost(idStr)
+      note.isLiked = true
+      note.likeCount = (note.likeCount || 0) + 1
+      showSuccessToast('点赞成功')
+    }
+  } catch (e) {
+    showFailToast('操作失败，请稍后重试')
+  }
 }
 
 // 查看用户详情
@@ -465,11 +436,7 @@ const previewImage = (images, startPosition) => {
 }
 
 onMounted(() => {
-  // 模拟加载数据
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
+  fetchPosts()
 })
 </script>
 

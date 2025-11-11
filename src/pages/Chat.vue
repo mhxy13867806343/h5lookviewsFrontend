@@ -248,8 +248,9 @@
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
-import { showSuccessToast, showImagePreview, showConfirmDialog } from 'vant'
+import { showSuccessToast, showImagePreview, showConfirmDialog, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { chatApi, userApi } from '@/api'
 
 // 类型定义
 interface ChatUser {
@@ -259,14 +260,15 @@ interface ChatUser {
   isOnline: boolean
 }
 
-interface ChatMessage {
-  id: string
+interface MessageItem {
+  id: string | number
   type: 'text' | 'image' | 'voice' | 'emoji'
   content: string
-  timestamp: Date
-  isSelf: boolean
-  status: 'sending' | 'sent' | 'read' | 'failed'
-  duration?: number // 语音消息时长
+  timestamp: string | Date
+  isOwn: boolean
+  status?: 'sending' | 'sent' | 'read' | 'failed'
+  duration?: number
+  showTime?: boolean
 }
 
 interface ActionOption {
@@ -282,7 +284,7 @@ const userId = route.params.userId as string
 
 // 响应式数据
 const chatUser = ref<ChatUser | null>(null)
-const messages = ref<ChatMessage[]>([])
+const messages = ref<MessageItem[]>([])
 const inputText = ref<string>('')
 const isVoiceMode = ref<boolean>(false)
 const isRecording = ref<boolean>(false)
@@ -340,32 +342,33 @@ const scrollToBottom = (): void => {
   })
 }
 
-const sendMessage = (): void => {
+const sendMessage = async (): Promise<void> => {
   if (!inputText.value.trim()) return
-  
-  const message = {
+  const content = inputText.value.trim()
+
+  const optimistic: MessageItem = {
     id: Date.now(),
     type: 'text',
-    content: inputText.value.trim(),
+    content,
     timestamp: new Date(),
     isOwn: true,
     status: 'sending',
     showTime: shouldShowTime()
   }
-  
-  messages.value.push(message)
+
+  messages.value.push(optimistic)
   inputText.value = ''
   scrollToBottom()
-  
-  // 模拟发送状态变化
-  setTimeout(() => {
-    message.status = 'sent'
-    
-    // 模拟对方回复
-    setTimeout(() => {
-      simulateReply()
-    }, 1000 + Math.random() * 2000)
-  }, 500)
+
+  try {
+    const sent = await chatApi.sendMessage(userId, { content, type: 'text' })
+    optimistic.id = sent.id
+    optimistic.status = 'sent'
+    optimistic.timestamp = sent.createTime || optimistic.timestamp
+  } catch (e) {
+    optimistic.status = 'failed'
+    showFailToast('发送失败')
+  }
 }
 
 const shouldShowTime = () => {
@@ -558,7 +561,7 @@ const playVoice = (message) => {
   showSuccessToast('播放语音')
 }
 
-const onMoreActionSelect = (action) => {
+const onMoreActionSelect = async (action) => {
   showMoreActions.value = false
   
   switch (action.value) {
@@ -566,13 +569,15 @@ const onMoreActionSelect = (action) => {
       showSuccessToast('查看聊天信息')
       break
     case 'clear':
-      showConfirmDialog({
-        title: '清空聊天记录',
-        message: '确定要清空所有聊天记录吗？',
-      }).then(() => {
+      try {
+        await showConfirmDialog({
+          title: '清空聊天记录',
+          message: '确定要清空所有聊天记录吗？',
+        })
+        await chatApi.deleteChat(userId)
         messages.value = []
         showSuccessToast('聊天记录已清空')
-      })
+      } catch {}
       break
     case 'report':
       showSuccessToast('举报功能开发中')
@@ -580,56 +585,48 @@ const onMoreActionSelect = (action) => {
   }
 }
 
-// 初始化数据
-const initChatData = () => {
-  // 确保初始状态为文本输入模式
-  isVoiceMode.value = false
-  
-  // 模拟聊天用户信息
-  chatUser.value = {
-    id: userId,
-    nickname: '聊天用户',
-    avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-  }
-  
-  // 模拟历史聊天记录
-  messages.value = [
-    {
-      id: 1,
-      type: 'text',
-      content: '你好！',
-      timestamp: new Date(Date.now() - 10 * 60 * 1000),
-      isOwn: false,
-      showTime: true
-    },
-    {
-      id: 2,
-      type: 'text',
-      content: '嗨，你好呀！',
-      timestamp: new Date(Date.now() - 9 * 60 * 1000),
-      isOwn: true,
-      status: 'sent'
-    },
-    {
-      id: 3,
-      type: 'text',
-      content: '最近怎么样？',
-      timestamp: new Date(Date.now() - 8 * 60 * 1000),
-      isOwn: false
-    },
-    {
-      id: 4,
-      type: 'text',
-      content: '挺好的，你呢？',
-      timestamp: new Date(Date.now() - 7 * 60 * 1000),
-      isOwn: true,
-      status: 'sent'
+// 加载聊天用户信息
+const loadChatUser = async (): Promise<void> => {
+  try {
+    const u = await userApi.getUserDetail(userId)
+    chatUser.value = {
+      id: u.id as any,
+      nickname: u.nickname || '聊天用户',
+      avatar: u.avatar || '',
+      isOnline: !!u.isOnline
     }
-  ]
+  } catch (e) {
+    chatUser.value = {
+      id: userId,
+      nickname: '聊天用户',
+      avatar: ''
+    } as any
+  }
 }
 
-onMounted(() => {
-  initChatData()
+// 加载历史记录
+const loadChatHistory = async (): Promise<void> => {
+  try {
+    const page = await chatApi.getChatHistory(userId, { page: 1, pageSize: 50 })
+    messages.value = (page?.list || []).map((m: any) => ({
+      id: m.id,
+      type: (m.type as any) || 'text',
+      content: m.lastMessage?.content || m.content || '',
+      timestamp: m.lastMessageTime || m.createTime,
+      isOwn: (m.user?.id || m.userId) === (userStore.userInfo?.id as any),
+      status: 'sent',
+      showTime: true
+    }))
+  } catch (e) {
+    showFailToast('加载聊天记录失败')
+  }
+}
+
+onMounted(async () => {
+  // 初始为文本模式
+  isVoiceMode.value = false
+  await loadChatUser()
+  await loadChatHistory()
   scrollToBottom()
 })
 

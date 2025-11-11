@@ -134,8 +134,9 @@
 
 <script lang="ts" setup>
 import { useUserStore } from '../stores/store'
-import { showSuccessToast, showConfirmDialog } from 'vant'
+import { showSuccessToast, showConfirmDialog, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { chatApi } from '@/api'
 
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -147,12 +148,14 @@ const userStore = useUserStore()
 interface Chat {
   id: string
   userId: string
-  username: string
+  name: string
   avatar: string
-  lastMessage: string
-  lastTime: string
+  lastMessage: { type: string; content: string }
+  lastMessageTime: string | Date
   unreadCount: number
   isOnline: boolean
+  isTop: boolean
+  notificationEnabled: boolean
 }
 
 interface Contact {
@@ -217,17 +220,25 @@ const toggleMute = (chat) => {
   showSuccessToast(chat.notificationEnabled ? '已开启通知' : '已开启免打扰')
 }
 
-const deleteChat = (chat) => {
-  showConfirmDialog({
-    title: '删除聊天',
-    message: '确定要删除这个聊天记录吗？',
-  }).then(() => {
+const deleteChat = async (chat: Chat) => {
+  try {
+    await showConfirmDialog({
+      title: '删除聊天',
+      message: '确定要删除这个聊天记录吗？',
+    })
+    await chatApi.deleteChat(String(chat.userId))
     const index = chats.value.findIndex(c => c.id === chat.id)
     if (index > -1) {
       chats.value.splice(index, 1)
-      showSuccessToast('已删除聊天记录')
     }
-  })
+    showSuccessToast('已删除聊天记录')
+  } catch (e: any) {
+    if (e) {
+      // 取消确认不提示错误
+      const msg = e?.message || ''
+      if (msg && !msg.includes('cancel')) showFailToast('删除失败')
+    }
+  }
 }
 
 const startNewChat = (contact) => {
@@ -264,56 +275,27 @@ const sortChats = () => {
   })
 }
 
-// 初始化数据
-const initChats = () => {
-  chats.value = [
-    {
-      id: 'chat001',
-      userId: 'user001',
-      name: '小明',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      lastMessage: {
-        type: 'text',
-        content: '你好，最近怎么样？'
-      },
-      lastMessageTime: new Date(Date.now() - 30 * 60 * 1000),
-      unreadCount: 2,
-      isOnline: true,
+// 加载聊天列表
+const loadChats = async (): Promise<void> => {
+  try {
+    const page = await chatApi.getChatList({ page: 1, pageSize: 50 })
+    const list = (page?.list || []).map((c: any) => ({
+      id: c.id,
+      userId: c.user?.id || c.userId,
+      name: c.user?.nickname || '匿名',
+      avatar: c.user?.avatar || '',
+      lastMessage: c.lastMessage || { type: c.lastMessage?.type || c.type || 'text', content: c.lastMessage?.content || c.content || '' },
+      lastMessageTime: c.lastMessageTime || c.createTime,
+      unreadCount: c.unreadCount || 0,
+      isOnline: !!c.user?.isOnline,
       isTop: false,
       notificationEnabled: true
-    },
-    {
-      id: 'chat002',
-      userId: 'user002',
-      name: '小红',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      lastMessage: {
-        type: 'image',
-        content: '[图片]'
-      },
-      lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      unreadCount: 0,
-      isOnline: false,
-      isTop: true,
-      notificationEnabled: true
-    },
-    {
-      id: 'chat003',
-      userId: 'user003',
-      name: '阿强',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      lastMessage: {
-        type: 'text',
-        content: '明天见面聊吧'
-      },
-      lastMessageTime: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      unreadCount: 0,
-      isOnline: true,
-      isTop: false,
-      notificationEnabled: false
-    }
-  ]
-  sortChats()
+    }))
+    chats.value = list
+    sortChats()
+  } catch (e) {
+    showFailToast('加载聊天列表失败')
+  }
 }
 
 const initContacts = () => {
@@ -340,7 +322,7 @@ const initContacts = () => {
 }
 
 onMounted(() => {
-  initChats()
+  loadChats()
   initContacts()
 })
 </script>

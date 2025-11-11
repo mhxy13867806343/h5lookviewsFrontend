@@ -202,12 +202,13 @@
 </template>
 
 <script lang="ts" setup>
-import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
+import { showSuccessToast, showConfirmDialog, showToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { noteApi } from '@/api/index'
 
 // 类型定义
 interface FavoriteNote {
-  id: number
+  id: string
   title: string
   content: string
   excerpt?: string
@@ -217,14 +218,15 @@ interface FavoriteNote {
     color: string
   }
   categoryName?: string
-  author: string
-  authorAvatar: string
+  author?: string
+  authorAvatar?: string
   favoriteTime: string
   createTime: string
   updateTime: string
   likeCount: number
   commentCount: number
   isPrivate: boolean
+  images?: string[]
   views?: number
   likes?: number
   favoriteReason?: string
@@ -259,7 +261,7 @@ const selectedQuickFilter = ref<string>('')
 
 // 筛选和排序
 const sortType = ref<string>('favoriteTime')
-const categoryFilter = ref<string>('all')
+const categoryFilter = ref<number | 'all'>('all')
 const timeFilter = ref<string>('all')
 
 const sortOptions = [
@@ -333,7 +335,7 @@ const filteredFavorites = computed<FavoriteNote[]>(() => {
 
   // 分类筛选
   if (categoryFilter.value !== 'all') {
-    result = result.filter(note => note.category.id === categoryFilter.value)
+    result = result.filter(note => note.category.id === Number(categoryFilter.value))
   }
 
   // 时间筛选
@@ -386,7 +388,7 @@ const filteredFavorites = computed<FavoriteNote[]>(() => {
       case 'updateTime':
         return new Date(b.updateTime) - new Date(a.updateTime)
       case 'popularity':
-        return (b.views + b.likes) - (a.views + a.likes)
+        return ((b.views || 0) + (b.likes || 0)) - ((a.views || 0) + (a.likes || 0))
       default:
         return 0
     }
@@ -409,14 +411,21 @@ const removeFavorite = (note: FavoriteNote): void => {
   showRemoveDialog.value = true
 }
 
-const confirmRemoveFavorite = () => {
-  const index = favorites.value.findIndex(n => n.id === currentNote.value.id)
-  if (index > -1) {
-    favorites.value.splice(index, 1)
-    showSuccessToast('已取消收藏')
+const confirmRemoveFavorite = async () => {
+  try {
+    if (!currentNote.value) return
+    await noteApi.uncollectNote(currentNote.value.id)
+    const index = favorites.value.findIndex(n => n.id === currentNote.value!.id)
+    if (index > -1) {
+      favorites.value.splice(index, 1)
+      showSuccessToast('已取消收藏')
+    }
+  } catch (e) {
+    showFailToast('取消收藏失败，请稍后重试')
+  } finally {
+    showRemoveDialog.value = false
+    removeReason.value = ''
   }
-  showRemoveDialog.value = false
-  removeReason.value = ''
 }
 
 const showNoteActions = (note: FavoriteNote): void => {
@@ -425,19 +434,28 @@ const showNoteActions = (note: FavoriteNote): void => {
 }
 
 const onSortChange = (): void => {
-  // 排序变化时重新加载数据
+  // 排序变化无需请求后端，使用本地排序
 }
 
 const onCategoryChange = (): void => {
   // 分类筛选变化时重新加载数据
+  page.value = 1
+  favorites.value = []
+  hasMore.value = true
+  fetchFavorites()
 }
 
 const onTimeChange = (): void => {
-  // 时间筛选变化时重新加载数据
+  // 时间筛选变化时无需请求后端，使用本地筛选
 }
 
 const onSearch = (): void => {
   showSearch.value = false
+  // 搜索后重新拉取第一页
+  page.value = 1
+  favorites.value = []
+  hasMore.value = true
+  fetchFavorites()
 }
 
 const applyQuickFilter = (filterValue: string): void => {
@@ -453,26 +471,11 @@ const goToExplore = (): void => {
 }
 
 const loadMore = async (): Promise<void> => {
-  if (loading.value) return
-
-  loading.value = true
-  try {
-    // 模拟加载更多数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const moreFavorites = generateMockFavorites(10)
-    favorites.value.push(...moreFavorites)
-    
-    // 模拟没有更多数据
-    if (favorites.value.length >= 50) {
-      hasMore.value = false
-    }
-  } finally {
-    loading.value = false
-  }
+  if (loading.value || !hasMore.value) return
+  await fetchFavorites()
 }
 
-const onActionSelect = (action: { name: string }): void => {
+const onActionSelect = (action: { name: string; value: string }): void => {
   showActionSheet.value = false
   
   switch (action.value) {
@@ -508,58 +511,87 @@ const formatTime = (time: string): string => {
     return noteTime.format('YYYY-MM-DD')
   }
 }
+// 分类映射
+const categoryNameMap: Record<string, number> = {
+  '生活随记': 1,
+  '工作学习': 2,
+  '美食分享': 3,
+  '旅行游记': 4,
+  '读书笔记': 5,
+  '运动健身': 6,
+}
 
-// 生成模拟数据
-const generateMockFavorites = (count: number = 20): FavoriteNote[] => {
-  const categories = [
-    { id: 1, name: '生活随记', color: '#74b9ff' },
-    { id: 2, name: '工作学习', color: '#00b894' },
-    { id: 3, name: '美食分享', color: '#fdcb6e' },
-    { id: 4, name: '旅行游记', color: '#fd79a8' },
-    { id: 5, name: '读书笔记', color: '#6c5ce7' },
-    { id: 6, name: '运动健身', color: '#e17055' },
-  ]
+const categoryColors: Record<number, string> = {
+  1: '#74b9ff',
+  2: '#00b894',
+  3: '#fdcb6e',
+  4: '#fd79a8',
+  5: '#6c5ce7',
+  6: '#e17055',
+}
 
-  const titles = [
-    '超实用的生活小技巧', '前端开发最佳实践', '家常菜制作大全',
-    '日本旅行攻略分享', '《原则》读书笔记', '健身入门指导',
-    'Vue3项目实战经验', '时间管理的艺术', '意大利美食探索',
-    '西藏自驾游记录', '投资理财心得', '瑜伽修身养心'
-  ]
+// 分页参数
+const page = ref<number>(1)
+const pageSize = ref<number>(20)
+let total = 0
 
-  const contents = [
-    '这些生活小技巧真的很实用，可以让日常生活更便利...',
-    '总结了前端开发中的一些最佳实践，希望对大家有帮助...',
-    '分享一些简单易学的家常菜做法，营养美味又健康...',
-    '详细的日本旅行攻略，包含交通、住宿、美食推荐...',
-    '这本书给了我很多启发，关于原则和决策的思考...',
-    '健身新手必看的入门指导，从基础动作开始学习...'
-  ]
+// 从后端加载收藏笔记
+const fetchFavorites = async (): Promise<void> => {
+  if (loading.value) return
+  loading.value = true
+  try {
+    const params: any = { page: page.value, pageSize: pageSize.value, collected: true }
+    if (searchKeyword.value) params.keyword = searchKeyword.value
+    if (categoryFilter.value !== 'all') {
+      const name = Object.entries(categoryNameMap).find(([, id]) => id === categoryFilter.value)?.[0]
+      if (name) params.category = name
+    }
 
-  const reasons = [
-    '内容很实用，值得收藏', '写得很详细，以后会用到', '很有启发性的文章',
-    '作者经验丰富，干货满满', '图文并茂，很容易理解', '正好是我需要的内容'
-  ]
-
-  return Array.from({ length: count }, (_, index) => ({
-    id: Date.now() + index,
-    title: titles[Math.floor(Math.random() * titles.length)],
-    content: contents[Math.floor(Math.random() * contents.length)],
-    excerpt: contents[Math.floor(Math.random() * contents.length)].substring(0, 80) + '...',
-    category: categories[Math.floor(Math.random() * categories.length)],
-    createTime: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
-    updateTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-    favoriteTime: new Date(Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000),
-    views: Math.floor(Math.random() * 500) + 50,
-    likes: Math.floor(Math.random() * 100) + 10,
-    favoriteReason: Math.random() > 0.5 ? reasons[Math.floor(Math.random() * reasons.length)] : null,
-    images: Math.random() > 0.6 ? ['https://img.yzcdn.cn/vant/cat.jpeg'] : []
-  }))
+    const { data } = await noteApi.getNotes(params)
+    total = data.total
+    const mapped: FavoriteNote[] = data.list
+      .filter((n: any) => n.isCollected) // 兜底过滤
+      .map((n: any) => {
+        const catId = categoryNameMap[n.category] ?? 0
+        const color = categoryColors[catId] || '#ddd'
+        const category = { id: catId, name: n.category, color }
+        const content = n.content || ''
+        return {
+          id: String(n.id),
+          title: n.title || '无标题',
+          content,
+          excerpt: content.substring(0, 80) + (content.length > 80 ? '...' : ''),
+          category,
+          categoryName: n.category,
+          author: n.user?.nickname,
+          authorAvatar: n.user?.avatar,
+          favoriteTime: n.updateTime || n.createTime,
+          createTime: n.createTime,
+          updateTime: n.updateTime,
+          likeCount: n.likeCount ?? 0,
+          commentCount: n.commentCount ?? 0,
+          isPrivate: !n.isPublic,
+          images: n.images || [],
+          views: 0,
+          likes: n.likeCount ?? 0,
+          favoriteReason: null
+        }
+      })
+    favorites.value.push(...mapped)
+    const loaded = favorites.value.length
+    hasMore.value = loaded < total
+    page.value += 1
+  } catch (e) {
+    console.error('加载收藏失败', e)
+    showFailToast('加载收藏失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 初始化数据
 onMounted(() => {
-  favorites.value = generateMockFavorites()
+  fetchFavorites()
 })
 </script>
 

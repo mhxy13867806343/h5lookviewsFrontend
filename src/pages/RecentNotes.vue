@@ -158,8 +158,10 @@
 </template>
 
 <script lang="ts" setup>
-import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
+import { showSuccessToast, showConfirmDialog, showToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { noteApi } from '@/api/index'
+import type { Note } from '@/types/api'
 
 const router = useRouter()
 
@@ -168,6 +170,7 @@ interface RecentNote {
   id: string
   title: string
   content: string
+  excerpt?: string
   category: {
     id: number
     name: string
@@ -211,6 +214,16 @@ const categories = ref<Category[]>([
   { id: 5, name: '读书笔记', color: '#6c5ce7' },
   { id: 6, name: '运动健身', color: '#e17055' },
 ])
+
+const categoryNameToId: Record<string, number> = {
+  '生活随记': 1,
+  '工作学习': 2,
+  '美食分享': 3,
+  '旅行游记': 4,
+  '读书笔记': 5,
+  '运动健身': 6,
+  '未分类': 0
+}
 
 const noteActions: NoteAction[] = [
   { name: '继续编辑', value: 'edit' },
@@ -401,50 +414,38 @@ const getEditCount = (note) => {
   return note.editCount || 1
 }
 
-// 生成模拟数据
-const generateMockNotes = () => {
-  const titles = [
-    '今天的工作总结', 'Vue3新特性学习', '美味早餐制作记录',
-    '周末计划安排', '读书心得分享', '健身打卡记录',
-    '项目进度更新', '学习笔记整理', '生活感悟随记'
-  ]
-
-  const contents = [
-    '今天完成了几个重要的工作任务，感觉很有成就感...',
-    '学习了Vue3的Composition API，确实比Options API更灵活...',
-    '尝试做了新的早餐搭配，营养丰富又美味...',
-    '计划这个周末去爬山，呼吸新鲜空气，放松心情...',
-    '这本书给了我很多启发，值得反复阅读...',
-    '坚持健身一个月了，身体状态明显改善...'
-  ]
-
-  const now = dayjs()
-  const notes = []
-
-  // 生成不同时间段的笔记
-  for (let i = 0; i < 30; i++) {
-    const randomHours = Math.floor(Math.random() * 24 * 7) // 最近7天内
-    const updateTime = now.subtract(randomHours, 'hour').toDate()
-    
-    notes.push({
-      id: i + 1,
-      title: titles[Math.floor(Math.random() * titles.length)],
-      content: contents[Math.floor(Math.random() * contents.length)],
-      excerpt: contents[Math.floor(Math.random() * contents.length)].substring(0, 60) + '...',
-      category: categories.value[Math.floor(Math.random() * categories.value.length)],
-      createTime: new Date(updateTime.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      updateTime,
-      editCount: Math.floor(Math.random() * 10) + 1,
-      isFavorite: Math.random() > 0.7,
+// 加载笔记数据（最近编辑）
+const fetchNotes = async () => {
+  try {
+    const { data } = await noteApi.getNotes({ page: 1, pageSize: 100 })
+    const list: Note[] = data?.list || []
+    const mapped: RecentNote[] = list.map(n => {
+      const name = n.category || '未分类'
+      const catId = categoryNameToId[name] ?? 0
+      const cat = categories.value.find(c => c.id === catId) || { id: 0, name, color: '#ddd' }
+      return {
+        id: n.id,
+        title: n.title || '无标题',
+        content: n.content || '',
+        excerpt: (n.content || '').substring(0, 60) + ((n.content || '').length > 60 ? '...' : ''),
+        category: cat,
+        createTime: n.createTime,
+        updateTime: n.updateTime,
+        editCount: 1,
+        wordCount: (n.content || '').length
+      }
     })
+    // 近期按更新时间倒序
+    notes.value = mapped.sort((a, b) => new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime())
+  } catch (e) {
+    console.error('加载最近笔记失败', e)
+    showFailToast('加载最近笔记失败')
   }
-
-  return notes.sort((a, b) => new Date(b.updateTime) - new Date(a.updateTime))
 }
 
 // 初始化数据
 onMounted(() => {
-  notes.value = generateMockNotes()
+  fetchNotes()
 })
 </script>
 

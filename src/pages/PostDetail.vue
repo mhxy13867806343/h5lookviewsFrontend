@@ -159,10 +159,11 @@ import { useShare } from '../hooks/useShare'
 import { useReport } from '../hooks/useReport'
 import { useComment } from '../hooks/useComment'
 import { useBlock } from '../hooks/useBlock'
-import { showSuccessToast, showConfirmDialog, showImagePreview, showToast } from 'vant'
+import { showSuccessToast, showConfirmDialog, showImagePreview, showToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
 import ReportDialog from '../components/ReportDialog.vue'
 import CommentComponent from '../components/CommentComponent.vue'
+import { postApi } from '@/api'
 
 // 类型定义
 interface PostInfo {
@@ -299,17 +300,21 @@ const handleLike = async () => {
   
   likeLoading.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
+    if (!postInfo.value) return
+    const idStr = String(postInfo.value.id)
     if (postInfo.value.isLiked) {
+      await postApi.unlikePost(idStr)
       postInfo.value.isLiked = false
-      postInfo.value.likesCount = Math.max(0, (postInfo.value.likesCount || 1) - 1)
+      ;(postInfo.value as any).likesCount = Math.max(0, ((postInfo.value as any).likesCount || 1) - 1)
       showSuccessToast('已取消点赞')
     } else {
+      await postApi.likePost(idStr)
       postInfo.value.isLiked = true
-      postInfo.value.likesCount = (postInfo.value.likesCount || 0) + 1
+      ;(postInfo.value as any).likesCount = ((postInfo.value as any).likesCount || 0) + 1
       showSuccessToast('点赞成功')
     }
+  } catch (e) {
+    showFailToast('操作失败，请稍后重试')
   } finally {
     likeLoading.value = false
   }
@@ -392,39 +397,34 @@ const formatTime = (time) => {
   return dayjs(time).format('MM-DD HH:mm')
 }
 
-// 初始化数据
-const initPostData = () => {
-  // 模拟动态详情数据
-  postInfo.value = {
-    id: postId,
-    author: {
-      id: 'user123',
-      nickname: '示例用户',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-    },
-    content: '今天去了一个很美的地方，风景如画！分享给大家看看，希望大家也能有机会去体验一下大自然的美好。这里的空气特别清新，让人心情愉悦。',
-    images: [
-      'https://img.yzcdn.cn/vant/cat.jpeg',
-      'https://img.yzcdn.cn/vant/cat.jpeg',
-      'https://img.yzcdn.cn/vant/cat.jpeg'
-    ],
-    location: '杭州·西湖',
-    createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    likesCount: 45,
-    commentsCount: 12,
-    collectsCount: 8,
-    isLiked: false,
-    isCollected: false
+// 加载详情
+const fetchPostDetail = async () => {
+  try {
+    const res = await postApi.getPostDetail(String(postId))
+    postInfo.value = {
+      id: res.id,
+      author: {
+        id: res.user?.id || res.userId,
+        nickname: res.user?.nickname || '',
+        avatar: res.user?.avatar || ''
+      },
+      content: res.content,
+      images: res.images || [],
+      location: '',
+      createTime: res.createTime,
+      likeCount: res.likeCount || 0,
+      commentCount: res.commentCount || 0,
+      shareCount: res.shareCount || 0,
+      isLiked: !!res.isLiked,
+      isCollected: false
+    } as any
+  } catch (e) {
+    showFailToast('加载详情失败')
   }
-  
-
-  
-  // 模拟关注状态
-  isFollowed.value = Math.random() > 0.5
 }
 
 onMounted(() => {
-  initPostData()
+  fetchPostDetail()
 })
 </script>
 

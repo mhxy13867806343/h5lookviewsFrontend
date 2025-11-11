@@ -185,8 +185,10 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/store'
-import { showImagePreview, showSuccessToast, showConfirmDialog } from 'vant'
+import { showImagePreview, showSuccessToast, showConfirmDialog, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { chatApi, userApi } from '@/api/index'
+import type { PageResponse, ChatMessage as ApiChatMessage, User as ApiUser } from '@/types/api'
 
 // 类型定义
 interface ChatMessage {
@@ -261,58 +263,51 @@ const formatMessageTime = (time: Date): string => {
 }
 
 // 加载聊天记录
+// 分页参数（向上滚动加载历史）
+const page = ref<number>(1)
+const pageSize = ref<number>(20)
+let total = 0
+
+const mapApiMessage = (m: ApiChatMessage): ChatMessage => ({
+  id: m.id,
+  type: (m.type as any) || 'text',
+  content: m.content,
+  isSelf: m.userId === userStore.user?.id,
+  createTime: new Date(m.createTime),
+  status: 'read',
+  showTime: false
+})
+
+const addShowTimeFlags = (list: ChatMessage[]): ChatMessage[] => {
+  const sorted = [...list].sort((a, b) => a.createTime.getTime() - b.createTime.getTime())
+  let lastTime: Date | null = null
+  return sorted.map(msg => {
+    const showTime = !lastTime || (msg.createTime.getTime() - lastTime.getTime()) > 10 * 60 * 1000
+    lastTime = msg.createTime
+    return { ...msg, showTime }
+  })
+}
+
 const loadMessages = async (): Promise<void> => {
+  if (loading.value || finished.value) return
   loading.value = true
-  
+
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // 模拟聊天数据
-    const mockMessages: ChatMessage[] = [
-      {
-        id: 'msg_1',
-        type: 'text',
-        content: '你好！',
-        isSelf: false,
-        createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        status: 'read',
-        showTime: true
-      },
-      {
-        id: 'msg_2',
-        type: 'text',
-        content: '你好，有什么可以帮助你的吗？',
-        isSelf: true,
-        createTime: new Date(Date.now() - 2 * 60 * 60 * 1000 + 30000),
-        status: 'read',
-        showTime: false
-      },
-      {
-        id: 'msg_3',
-        type: 'text',
-        content: '我想了解一下这个产品的详细信息',
-        isSelf: false,
-        createTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-        status: 'read',
-        showTime: true
-      },
-      {
-        id: 'msg_4',
-        type: 'image',
-        content: 'https://img.yzcdn.cn/vant/cat.jpeg',
-        isSelf: true,
-        createTime: new Date(Date.now() - 30 * 60 * 1000),
-        status: 'read',
-        showTime: true
-      }
-    ]
-    
-    messages.value = [...mockMessages, ...messages.value]
-    finished.value = true
-    
+    const { data } = await chatApi.getChatHistory(userId.value, { page: page.value, pageSize: pageSize.value })
+    const list = (data?.list || []).map(mapApiMessage)
+    total = data?.total || 0
+
+    // 新页数据放在前面（向上加载）
+    const combined = [...list, ...messages.value]
+    messages.value = addShowTimeFlags(combined)
+
+    // 更新分页
+    const loaded = page.value * pageSize.value
+    finished.value = loaded >= total || list.length === 0
+    page.value += 1
   } catch (error) {
     console.error('加载聊天记录失败:', error)
+    showFailToast('加载聊天记录失败')
   } finally {
     loading.value = false
   }
@@ -321,17 +316,16 @@ const loadMessages = async (): Promise<void> => {
 // 加载用户信息
 const loadUserInfo = async (): Promise<void> => {
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
+    const { data } = await userApi.getUserDetail(userId.value)
     chatUser.value = {
-      id: userId.value,
-      nickname: '张小明',
-      avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-      isOnline: true
+      id: data.id,
+      nickname: data.nickname,
+      avatar: data.avatar,
+      isOnline: !!data.isOnline
     }
   } catch (error) {
     console.error('加载用户信息失败:', error)
+    showFailToast('加载用户信息失败')
   }
 }
 
@@ -359,29 +353,17 @@ const sendMessage = async (): Promise<void> => {
   await nextTick()
   scrollToBottom()
   
-  // 模拟发送
+  // 发送到后端
   sending.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const { data } = await chatApi.sendMessage(userId.value, { content: messageContent, type: 'text' })
+    // 用后端返回的消息更新当前消息
+    newMessage.id = data.id
+    newMessage.createTime = new Date(data.createTime)
     newMessage.status = 'sent'
-    
-    // 模拟对方回复
-    setTimeout(() => {
-      const replyMessage: ChatMessage = {
-        id: `msg_${Date.now() + 1}`,
-        type: 'text',
-        content: '收到，我来为你详细介绍一下',
-        isSelf: false,
-        createTime: new Date(),
-        status: 'read',
-        showTime: false
-      }
-      messages.value.push(replyMessage)
-      nextTick(() => scrollToBottom())
-    }, 2000)
-    
   } catch (error) {
     newMessage.status = 'failed'
+    showFailToast('发送失败')
   } finally {
     sending.value = false
   }
@@ -418,8 +400,13 @@ const onMoreActionSelect = async (action) => {
           title: '确认清空',
           message: '确定要清空聊天记录吗？此操作不可恢复。'
         })
-        messages.value = []
-        showSuccessToast('聊天记录已清空')
+        try {
+          await chatApi.deleteChat(userId.value)
+          messages.value = []
+          showSuccessToast('聊天记录已清空')
+        } catch (e) {
+          showFailToast('清空失败，请稍后重试')
+        }
       } catch {
         // 用户取消
       }

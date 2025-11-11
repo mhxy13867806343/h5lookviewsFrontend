@@ -152,9 +152,10 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccessToast, showImagePreview } from 'vant'
+import { showSuccessToast, showImagePreview, showFailToast } from 'vant'
 import { useShare } from '../hooks/useShare'
 import { useComment } from '../hooks/useComment'
+import { noteApi } from '@/api'
 import CommentComponent from '../components/CommentComponent.vue'
 import dayjs from 'dayjs'
 
@@ -202,7 +203,7 @@ const {
 // 使用评论 hooks
 const { comments } = useComment()
 
-// 模拟笔记数据
+// 笔记数据
 const notes = ref<Note[]>([
   {
     id: 1,
@@ -306,6 +307,49 @@ const notes = ref<Note[]>([
   }
 ])
 
+// 分类颜色映射
+const categoryColors: Record<string, string> = {
+  life: '#74b9ff',
+  study: '#00b894',
+  food: '#fdcb6e',
+  travel: '#e84393',
+  book: '#6c5ce7'
+}
+
+// 加载笔记列表
+const fetchNotes = async () => {
+  try {
+    loading.value = true
+    const params: any = { page: 1, pageSize: 20 }
+    if (activeCategory.value !== 'all') params.category = activeCategory.value
+    const res = await noteApi.getNotes(params)
+    notes.value = (res.list || []).map(n => ({
+      id: Number(n.id),
+      title: n.title || '',
+      content: n.content || '',
+      images: n.images || [],
+      author: {
+        id: Number(n.user?.id || n.userId),
+        name: n.user?.nickname || '',
+        avatar: n.user?.avatar || '',
+        isFollowed: false
+      },
+      category: n.category || '其他',
+      categoryColor: categoryColors[n.category as string] || '#999',
+      createTime: new Date(n.createTime),
+      likeCount: n.likeCount || 0,
+      commentCount: n.commentCount || 0,
+      collectCount: n.collectCount || 0,
+      isLiked: !!n.isLiked,
+      isCollected: !!n.isCollected
+    }))
+  } catch (e) {
+    showFailToast('加载笔记失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 
 
 // 计算属性
@@ -339,7 +383,7 @@ const goToNewNote = (): void => {
 }
 
 const onCategoryChange = (): void => {
-  // 分类变化时的处理
+  fetchNotes()
 }
 
 const formatTime = (time: string): string => {
@@ -360,15 +404,29 @@ const toggleFollow = (author: { isFollowed: boolean }): void => {
 }
 
 const toggleLike = (note: Note): void => {
+  // 暂无点赞接口，保持本地状态即可
   note.isLiked = !note.isLiked
-  note.likeCount += note.isLiked ? 1 : -1
+  note.likeCount = Math.max(0, note.likeCount + (note.isLiked ? 1 : -1))
   showSuccessToast(note.isLiked ? '已点赞' : '已取消点赞')
 }
 
-const toggleCollect = (note: Note & { isCollected: boolean; collectCount: number }): void => {
-  note.isCollected = !note.isCollected
-  note.collectCount += note.isCollected ? 1 : -1
-  showSuccessToast(note.isCollected ? '已收藏' : '已取消收藏')
+const toggleCollect = async (note: Note & { isCollected: boolean; collectCount: number }): Promise<void> => {
+  try {
+    const idStr = String(note.id)
+    if (note.isCollected) {
+      await noteApi.uncollectNote(idStr)
+      note.isCollected = false
+      note.collectCount = Math.max(0, (note.collectCount || 1) - 1)
+      showSuccessToast('已取消收藏')
+    } else {
+      await noteApi.collectNote(idStr)
+      note.isCollected = true
+      note.collectCount = (note.collectCount || 0) + 1
+      showSuccessToast('收藏成功')
+    }
+  } catch (e) {
+    showFailToast('操作失败，请稍后重试')
+  }
 }
 
 // 分享笔记 - 使用 hooks 中的方法
@@ -401,10 +459,7 @@ const previewImages = (images: string[], startPosition: number): void => {
 }
 
 onMounted(() => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
+  fetchNotes()
 })
 </script>
 

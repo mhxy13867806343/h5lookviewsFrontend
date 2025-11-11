@@ -105,6 +105,8 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import '../../utils/index' // 确保 dayjs 插件被加载
+import { showFailToast } from 'vant'
+import { chatApi } from '@/api'
 
 // 类型定义
 interface LastMessage {
@@ -186,74 +188,24 @@ const loadMessages = async (page = 1) => {
   }
 
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // 模拟私信消息数据
-    const mockMessages = [
-      {
-        id: `chat_${page}_1`,
-        userId: 'user001',
-        user: {
-          id: 'user001',
-          nickname: '张小明',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-          isOnline: true,
-          isVip: true
-        },
-        unreadCount: 3,
-        lastMessageTime: new Date(Date.now() - 30 * 60 * 1000),
-        lastMessage: {
-          type: 'text',
-          content: '你好，请问这个产品还有库存吗？'
-        }
-      },
-      {
-        id: `chat_${page}_2`,
-        userId: 'user002',
-        user: {
-          id: 'user002',
-          nickname: '李小红',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-          isOnline: false,
-          isVip: false
-        },
-        unreadCount: 0,
-        lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        lastMessage: {
-          type: 'image',
-          content: ''
-        }
-      },
-      {
-        id: `chat_${page}_3`,
-        userId: 'user003',
-        user: {
-          id: 'user003',
-          nickname: '王小刚',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',
-          isOnline: true,
-          isVip: false
-        },
-        unreadCount: 1,
-        lastMessageTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        lastMessage: {
-          type: 'text',
-          content: '谢谢你的帮助！'
-        }
-      }
-    ]
+    const res = await chatApi.getChatList({ page, pageSize: 10 })
+    const list = (res.data.list || []).map(item => ({
+      id: item.id,
+      userId: item.userId,
+      user: item.user,
+      unreadCount: item.unreadCount || 0,
+      lastMessageTime: item.lastMessageTime || item.createTime,
+      lastMessage: item.lastMessage || { type: 'text', content: item.content || '' }
+    }))
 
     if (page === 1) {
-      messages.value = mockMessages
+      messages.value = list
     } else {
-      messages.value.push(...mockMessages)
+      messages.value.push(...list)
     }
 
     // 模拟分页结束
-    if (page >= 3) {
-      finished.value = true
-    }
+    finished.value = res.data.page * res.data.pageSize >= res.data.total || list.length < res.data.pageSize
 
     // 保存到全局变量
     globalMessages = [...messages.value]
@@ -264,6 +216,7 @@ const loadMessages = async (page = 1) => {
 
   } catch (error) {
     console.error('加载私信消息失败:', error)
+    showFailToast('加载私信消息失败')
   } finally {
     loading.value = false
     loadingMore.value = false
@@ -279,15 +232,32 @@ const loadMore = () => {
 }
 
 // 删除单条消息
-const removeItem = (id) => {
-  messages.value = messages.value.filter(item => item.id !== id)
+const removeItem = async (id) => {
+  const target = messages.value.find(item => item.id === id)
+  if (!target) {
+    return
+  }
+  try {
+    await chatApi.deleteChat(target.userId)
+    messages.value = messages.value.filter(item => item.id !== id)
+  } catch (error) {
+    console.error('删除私信失败:', error)
+    showFailToast('删除失败')
+  }
 }
 
 // 清空所有消息
-const clearAll = () => {
-  messages.value = []
-  currentPage.value = 1
-  finished.value = false
+const clearAll = async () => {
+  try {
+    const userIds = messages.value.map(item => item.userId)
+    await Promise.all(userIds.map(uid => chatApi.deleteChat(uid)))
+    messages.value = []
+    currentPage.value = 1
+    finished.value = false
+  } catch (error) {
+    console.error('清空私信失败:', error)
+    showFailToast('清空失败')
+  }
 }
 
 // 使用全局变量来跟踪数据加载状态，避免组件重新挂载时重复加载

@@ -201,7 +201,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/store'
-import { showSuccessToast, showToast, showConfirmDialog, showImagePreview } from 'vant'
+import { showSuccessToast, showToast, showConfirmDialog, showImagePreview, showFailToast } from 'vant'
+import type { UploaderFileListItem } from 'vant'
+import { userApi, uploadApi } from '@/api/index'
 
 
 // 类型定义
@@ -249,7 +251,7 @@ const newTag = ref<string>('')
 const showAvatarSheet = ref<boolean>(false)
 const showBirthdayPicker = ref<boolean>(false)
 const showGenderPicker = ref<boolean>(false)
-const fileList = ref<File[]>([])
+const fileList = ref<UploaderFileListItem[]>([])
 const uploaderRef = ref<any>(null)
 
 // 推荐标签
@@ -312,7 +314,7 @@ const handleBack = (): void => {
 }
 
 const hasChanges = (): boolean => {
-  const original = userStore.userInfo
+  const original = userStore.userInfo as any
   return (
     formData.value.nickname !== (original?.nickname || '') ||
     formData.value.signature !== (original?.signature || '') ||
@@ -329,18 +331,28 @@ const saveProfile = async (): Promise<void> => {
   }
 
   try {
-    // 模拟保存API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // 更新用户store
+    const res = await userApi.updateUserInfo({
+      avatar: formData.value.avatar,
+      nickname: formData.value.nickname,
+      signature: formData.value.signature,
+      location: formData.value.location,
+      birthday: formData.value.birthday,
+      gender: formData.value.gender,
+      tags: formData.value.tags,
+      allowStrangerView: formData.value.allowStrangerView,
+      allowStrangerMessage: formData.value.allowStrangerMessage,
+      showOnlineStatus: formData.value.showOnlineStatus
+    } as any)
+
+    // 更新用户store（容忍额外字段）
     if (userStore.userInfo) {
-      Object.assign(userStore.userInfo, formData.value)
+      Object.assign(userStore.userInfo as any, formData.value)
     }
-    
+
     showSuccessToast('保存成功')
     router.back()
   } catch (error) {
-    showToast('保存失败，请重试')
+    showFailToast('保存失败，请重试')
   }
 }
 
@@ -355,8 +367,13 @@ const onAvatarSelect = (action: AvatarAction): void => {
   switch (action.value) {
     case 'camera':
     case 'album':
-      // 触发文件选择
-      uploaderRef.value?.chooseFile()
+      // 触发文件选择（容忍组件方法名差异）
+      if (uploaderRef.value?.chooseFile) {
+        (uploaderRef.value as any).chooseFile()
+      } else if (uploaderRef.value?.$el) {
+        const input: HTMLInputElement | null = (uploaderRef.value.$el as HTMLElement).querySelector('input[type="file"]')
+        input?.click()
+      }
       break
     case 'preview':
       // 预览头像
@@ -368,16 +385,20 @@ const onAvatarSelect = (action: AvatarAction): void => {
   }
 }
 
-const afterRead = (file: { file: File }): void => {
-  // 模拟上传头像
-  const reader = new FileReader()
-  reader.onload = (e: ProgressEvent<FileReader>) => {
-    if (e.target?.result) {
-      formData.value.avatar = e.target.result as string
-      showSuccessToast('头像上传成功')
+const afterRead = async (file: UploaderFileListItem | UploaderFileListItem[]): Promise<void> => {
+  try {
+    const item = Array.isArray(file) ? file[0] : file
+    const raw = (item as UploaderFileListItem).file
+    if (!raw) {
+      showFailToast('未获取到图片文件')
+      return
     }
+    const { data } = await uploadApi.uploadImage(raw)
+    formData.value.avatar = data.url
+    showSuccessToast('头像上传成功')
+  } catch (e) {
+    showFailToast('头像上传失败，请稍后重试')
   }
-  reader.readAsDataURL(file.file)
 }
 
 // 生日相关方法
@@ -420,7 +441,7 @@ const addRecommendedTag = (tag: string): void => {
 
 // 初始化数据
 const initData = (): void => {
-  const user = userStore.userInfo
+  const user: any = userStore.userInfo
   if (user) {
     formData.value = {
       avatar: user.avatar || 'https://img.yzcdn.cn/vant/cat.jpeg',

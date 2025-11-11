@@ -1,5 +1,6 @@
 import { useUserStore } from '@/stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
+import { userApi } from '@/api'
 
 // 类型定义
 interface LoginCredentials {
@@ -22,46 +23,44 @@ export function useAuth() {
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
-      // 模拟登录API调用
-      await simulateApiCall(1000)
-      
-      if (credentials.username && credentials.password) {
-        userStore.setUserInfo({
-          id: Date.now(),
-          username: credentials.username,
-          email: `${credentials.username}@example.com`
-        })
-        userStore.setToken('mock-token-' + Date.now())
-        
-        showSuccessToast('登录成功')
-        return true
-      } else {
-        showFailToast('用户名或密码错误')
-        return false
-      }
+      const res = await userApi.login({
+        username: credentials.username,
+        password: credentials.password
+      })
+
+      // 设置用户信息与 token
+      userStore.setToken(res.token)
+      userStore.setUserInfo({
+        id: res.user.id,
+        nickname: res.user.nickname,
+        avatar: res.user.avatar,
+        email: res.user.email,
+        phone: res.user.phone,
+        isVip: res.user.isVip
+      })
+
+      showSuccessToast('登录成功')
+      return true
     } catch (error) {
-      showFailToast('登录失败，请重试')
+      showFailToast('登录失败，请检查账号或网络')
       return false
     }
   }
 
-  const register = async (userData) => {
+  const register = async (userData: { username: string; password: string; confirmPassword: string; email?: string; phone?: string }): Promise<boolean> => {
     try {
-      // 模拟注册API调用
-      await simulateApiCall(1500)
-      
-      userStore.setUserInfo({
-        id: Date.now(),
+      await userApi.register({
         username: userData.username,
+        password: userData.password,
+        confirmPassword: userData.confirmPassword,
         email: userData.email,
         phone: userData.phone
       })
-      userStore.setToken('mock-token-' + Date.now())
-      
-      showSuccessToast('注册成功')
+      showSuccessToast('注册成功，请登录')
+      router.push('/login')
       return true
     } catch (error) {
-      showFailToast('注册失败，请重试')
+      showFailToast('注册失败，请检查信息或网络')
       return false
     }
   }
@@ -90,7 +89,4 @@ export function useAuth() {
   }
 }
 
-// 模拟API调用
-function simulateApiCall(delay) {
-  return new Promise(resolve => setTimeout(resolve, delay))
-}
+// 已移除模拟 API 调用

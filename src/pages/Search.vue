@@ -232,10 +232,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccessToast } from 'vant'
+import { showSuccessToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { postApi, noteApi } from '@/api/index'
 
 const router = useRouter()
 
@@ -287,48 +288,16 @@ const sortOptions: SortOption[] = [
   { label: '热度', value: 'popularity' }
 ]
 
-// 模拟数据
-const mockPosts = [
-  {
-    id: 1,
-    username: '小明',
-    avatar: '',
-    content: '今天天气真好，出去走走心情都变好了！Vue3 的学习也有新进展。',
-    location: '北京·朝阳公园',
-    createTime: new Date(2025, 9, 15), // 2025-10
-    likeCount: 12,
-    commentCount: 3
-  },
-  {
-    id: 2,
-    username: '小红',
-    avatar: '',
-    content: '分享一下我的生活随记，今天做了一道新菜。',
-    location: '上海·徐汇区',
-    createTime: new Date(2025, 10, 5), // 2025-11
-    likeCount: 8,
-    commentCount: 5
-  }
-]
-
-const mockNotes = [
-  {
-    id: 1,
-    title: 'Vue3 学习笔记',
-    content: 'Vue3 的 Composition API 真的很好用，可以让代码组织得更加清晰。今天学习了 ref 和 reactive 的区别，还有 computed 的使用方法。',
-    category: '工作学习',
-    categoryColor: '#00b894',
-    createTime: new Date(2025, 9, 20), // 2025-10
-  },
-  {
-    id: 2,
-    title: '生活随记',
-    content: '今天是个好天气，心情也特别好。记录一下生活中的美好瞬间，这些小确幸总是让人感到温暖。',
-    category: '生活随记',
-    categoryColor: '#74b9ff',
-    createTime: new Date(2025, 10, 8), // 2025-11
-  }
-]
+// 分类颜色映射（用于笔记）
+const categoryColors: Record<string, string> = {
+  '生活随记': '#74b9ff',
+  '工作学习': '#00b894',
+  '美食分享': '#fdcb6e',
+  '旅行游记': '#fd79a8',
+  '读书笔记': '#6c5ce7',
+  '运动健身': '#e17055',
+  '未分类': '#ddd'
+}
 
 const mockFriends = [
   {
@@ -391,64 +360,89 @@ const onSearch = async () => {
     }
   }
   
-  // 模拟搜索延迟
-  await new Promise(resolve => setTimeout(resolve, 800))
-  
   // 执行搜索
-  performSearch()
-  
+  await performSearch()
   isSearching.value = false
 }
 
-const performSearch = () => {
+const performSearch = async () => {
   const keyword = searchValue.value.toLowerCase()
-  let results = []
-  
+  let results: any[] = []
+
   // 时间筛选
-  const filterByTime = (item) => {
+  const filterByTime = (item: any) => {
     if (!selectedTime.value) return true
     const itemMonth = dayjs(item.createTime).format('YYYY-MM')
     return itemMonth === selectedTime.value
   }
-  
-  switch (searchType.value) {
-    case 'posts':
-      results = mockPosts.filter(post => {
-        const matchKeyword = post.content.toLowerCase().includes(keyword) || 
-                            post.username.toLowerCase().includes(keyword)
-        const matchTime = filterByTime(post)
-        const matchImages = !advancedFilters.hasImages || (post.images && post.images.length > 0)
-        return matchKeyword && matchTime && matchImages
-      })
-      break
-      
-    case 'notes':
-      results = mockNotes.filter(note => {
-        const matchKeyword = (note.title?.toLowerCase() || '').includes(keyword) || 
-                            note.content.toLowerCase().includes(keyword) ||
-                            note.category.toLowerCase().includes(keyword)
-        const matchTime = filterByTime(note)
-        const matchWords = note.content.length >= advancedFilters.minWords
-        return matchKeyword && matchTime && matchWords
-      })
-      break
-      
-    case 'friends':
-      results = mockFriends.filter(friend => {
-        return friend.name.toLowerCase().includes(keyword) ||
-               (friend.signature?.toLowerCase() || '').includes(keyword)
-      })
-      break
+
+  try {
+    switch (searchType.value) {
+      case 'posts': {
+        const { data } = await postApi.getPosts({ page: 1, pageSize: 50, keyword })
+        const list = (data?.list || []).map(p => ({
+          id: p.id,
+          username: p.user?.nickname || '匿名',
+          avatar: p.user?.avatar || '',
+          content: p.content || '',
+          location: p.tags?.join(' · ') || '',
+          createTime: p.createTime,
+          likeCount: p.likeCount,
+          commentCount: p.commentCount,
+          images: p.images || []
+        }))
+        results = list.filter(post => {
+          const matchKeyword = post.content.toLowerCase().includes(keyword) || 
+                              post.username.toLowerCase().includes(keyword)
+          const matchTime = filterByTime(post)
+          const matchImages = !advancedFilters.hasImages || (post.images && post.images.length > 0)
+          return matchKeyword && matchTime && matchImages
+        })
+        break
+      }
+
+      case 'notes': {
+        const { data } = await noteApi.getNotes({ page: 1, pageSize: 50, keyword })
+        const list = (data?.list || []).map(n => ({
+          id: n.id,
+          title: n.title,
+          content: n.content || '',
+          category: n.category || '未分类',
+          categoryColor: categoryColors[n.category || '未分类'] || '#ddd',
+          createTime: n.createTime
+        }))
+        results = list.filter(note => {
+          const matchKeyword = (note.title?.toLowerCase() || '').includes(keyword) || 
+                              note.content.toLowerCase().includes(keyword) ||
+                              note.category.toLowerCase().includes(keyword)
+          const matchTime = filterByTime(note)
+          const matchWords = note.content.length >= advancedFilters.minWords
+          return matchKeyword && matchTime && matchWords
+        })
+        break
+      }
+
+      case 'friends': {
+        results = mockFriends.filter(friend => {
+          return friend.name.toLowerCase().includes(keyword) ||
+                 (friend.signature?.toLowerCase() || '').includes(keyword)
+        })
+        break
+      }
+    }
+
+    // 排序
+    if (advancedFilters.sortBy === 'time') {
+      results.sort((a, b) => new Date(b.createTime || 0) - new Date(a.createTime || 0))
+    } else if (advancedFilters.sortBy === 'popularity' && searchType.value === 'posts') {
+      results.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+    }
+
+    searchResults.value = results
+  } catch (error) {
+    console.error('搜索失败:', error)
+    showFailToast('搜索失败，请稍后重试')
   }
-  
-  // 排序
-  if (advancedFilters.sortBy === 'time') {
-    results.sort((a, b) => new Date(b.createTime || 0) - new Date(a.createTime || 0))
-  } else if (advancedFilters.sortBy === 'popularity' && searchType.value === 'posts') {
-    results.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
-  }
-  
-  searchResults.value = results
 }
 
 const onClear = () => {
@@ -485,7 +479,8 @@ const formatTime = (time) => {
 }
 
 const viewPost = (post) => {
-  showSuccessToast(`查看动态: ${post.content.slice(0, 20)}...`)
+  // 跳转到动态详情
+  router.push(`/post/${post.id}`)
 }
 
 const viewNote = (note) => {
@@ -497,9 +492,11 @@ const viewFriend = (friend) => {
 }
 
 // 监听搜索类型变化
-watch(searchType, () => {
+watch(searchType, async () => {
   if (hasSearched.value) {
-    performSearch()
+    isSearching.value = true
+    await performSearch()
+    isSearching.value = false
   }
 })
 </script>

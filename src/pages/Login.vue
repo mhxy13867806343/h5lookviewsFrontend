@@ -73,6 +73,7 @@
 <script lang="ts" setup>
 import { useUserStore } from '../stores/store'
 import { showSuccessToast, showFailToast } from 'vant'
+import { useAuth } from '@/hooks/useAuth'
 
 // 定义表单类型
 interface LoginForm {
@@ -85,6 +86,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const { login } = useAuth()
 const router = useRouter()
 const loading = ref<boolean>(false)
 const rememberMe = ref<boolean>(false)
@@ -97,25 +99,11 @@ const form = ref<LoginForm>({
 // 方法
 const onSubmit = async (values: LoginForm): Promise<void> => {
   loading.value = true
-  
-  // 模拟登录请求
-  setTimeout(() => {
-    if (values.username && values.password) {
-      // 模拟登录成功
-      userStore.setUserInfo({
-        id: 1,
-        username: values.username,
-        email: `${values.username}@example.com`
-      })
-      userStore.setToken('mock-token-12345')
-      
-      showSuccessToast('登录成功')
-      router.push('/home')
-    } else {
-      showFailToast('用户名或密码错误')
-    }
-    loading.value = false
-  }, 1000)
+  const ok = await login({ username: values.username, password: values.password })
+  loading.value = false
+  if (ok) {
+    router.push('/home')
+  }
 }
 
 const wechatLogin = (): void => {

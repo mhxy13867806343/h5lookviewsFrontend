@@ -155,8 +155,10 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { showSuccessToast, showConfirmDialog, showToast } from 'vant'
+import { showSuccessToast, showConfirmDialog, showToast, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { noteApi } from '@/api/index'
+import type { Note, PageResponse } from '@/types/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -192,6 +194,11 @@ const showActionSheet = ref<boolean>(false)
 const searchKeyword = ref<string>('')
 const searchHistory = ref<string[]>(['Vue学习笔记', '旅行攻略', '美食制作'])
 const currentNote = ref<AllNote | null>(null)
+
+// 分页
+const page = ref<number>(1)
+const pageSize = ref<number>(20)
+let total = 0
 
 // 筛选和排序
 const sortType = ref<string>('updateTime')
@@ -249,6 +256,16 @@ const noteActions: NoteAction[] = [
   { name: '取消', value: 'cancel' },
 ]
 
+// 分类颜色映射
+const categoryColors: Record<number, string> = {
+  1: '#74b9ff',
+  2: '#00b894',
+  3: '#fdcb6e',
+  4: '#fd79a8',
+  5: '#6c5ce7',
+  6: '#e17055',
+}
+
 // 计算属性
 const filteredNotes = computed(() => {
   let result = notes.value
@@ -298,10 +315,17 @@ const viewNote = (note: AllNote): void => {
 
 const toggleFavorite = async (note: AllNote & { isFavorite?: boolean }): Promise<void> => {
   try {
-    note.isFavorite = !note.isFavorite
-    showSuccessToast(note.isFavorite ? '已添加到收藏' : '已取消收藏')
+    if (note.isFavorite) {
+      await noteApi.uncollectNote(note.id)
+      note.isFavorite = false
+      showSuccessToast('已取消收藏')
+    } else {
+      await noteApi.collectNote(note.id)
+      note.isFavorite = true
+      showSuccessToast('已添加到收藏')
+    }
   } catch (error) {
-    showToast('操作失败')
+    showFailToast('操作失败')
   }
 }
 
@@ -315,7 +339,11 @@ const onSortChange = (): void => {
 }
 
 const onCategoryChange = (): void => {
-  // 分类筛选变化时重新加载数据
+  // 分类筛选变化时，重置并从后端加载该分类的数据
+  page.value = 1
+  notes.value = []
+  hasMore.value = true
+  fetchNotes()
 }
 
 const onSearch = (keyword: string): void => {
@@ -326,6 +354,11 @@ const onSearch = (keyword: string): void => {
     }
   }
   showSearch.value = false
+  // 搜索后从后端按关键字加载
+  page.value = 1
+  notes.value = []
+  hasMore.value = true
+  fetchNotes()
 }
 
 const clearHistory = (): void => {
@@ -333,23 +366,8 @@ const clearHistory = (): void => {
 }
 
 const loadMore = async (): Promise<void> => {
-  if (loading.value) return
-
-  loading.value = true
-  try {
-    // 模拟加载更多数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const moreNotes = generateMockNotes(10)
-    notes.value.push(...moreNotes)
-    
-    // 模拟没有更多数据
-    if (notes.value.length >= 50) {
-      hasMore.value = false
-    }
-  } finally {
-    loading.value = false
-  }
+  if (loading.value || !hasMore.value) return
+  await fetchNotes()
 }
 
 const onActionSelect = (action: NoteAction): void => {
@@ -402,43 +420,53 @@ const formatTime = (time: string | Date): string => {
   }
 }
 
-// 生成模拟数据
-const generateMockNotes = (count: number): AllNote[] => {
-  const categories = [
-    { id: 1, name: '生活随记', color: '#74b9ff' },
-    { id: 2, name: '工作学习', color: '#00b894' },
-    { id: 3, name: '美食分享', color: '#fdcb6e' },
-    { id: 4, name: '旅行游记', color: '#fd79a8' },
-    { id: 5, name: '读书笔记', color: '#6c5ce7' },
-    { id: 6, name: '运动健身', color: '#e17055' },
-  ]
+// 从后端加载笔记数据
+const fetchNotes = async (): Promise<void> => {
+  if (loading.value) return
+  loading.value = true
+  try {
+    const params: any = { page: page.value, pageSize: pageSize.value }
+    if (categoryFilter.value !== 'all') {
+      // 传分类名给后端
+      const name = Object.entries(categoryNameMap).find(([, id]) => id === categoryFilter.value)?.[0]
+      if (name) params.category = name
+    }
+    if (searchKeyword.value) params.keyword = searchKeyword.value
 
-  const titles = [
-    '今天的美好生活', '工作中的小技巧', '美味的家常菜制作',
-    '周末旅行小记', '这本书真的很棒', '晨跑的收获',
-    'Vue3学习笔记', '如何提高工作效率', '意大利面制作方法',
-    '杭州西湖一日游', '《人类简史》读后感', '健身房训练计划'
-  ]
-
-  const contents = [
-    '今天过得很充实，分享一些生活中的小美好...',
-    '在工作中发现了一些提高效率的方法，记录下来...',
-    '学会了一道新菜，味道还不错，分享制作过程...',
-    '这次旅行收获很多，风景很美，人也很好...',
-    '读完这本书后有很多感悟，值得推荐给大家...',
-    '坚持运动真的很重要，身体和心情都变好了...'
-  ]
-
-  return Array.from({ length: count }, (_, index) => ({
-    id: (Date.now() + index).toString(),
-    title: titles[Math.floor(Math.random() * titles.length)],
-    content: contents[Math.floor(Math.random() * contents.length)],
-    category: categories[Math.floor(Math.random() * categories.length)],
-    createTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-    updateTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-    wordCount: Math.floor(Math.random() * 1000) + 100,
-    isPrivate: Math.random() > 0.8
-  }))
+    const { data } = await noteApi.getNotes(params)
+    total = data.total
+    const mapped = data.list.map((n: Note) => {
+      const catId = categoryNameMap[n.category] ?? 0
+      const color = categoryColors[catId] || '#ddd'
+      const category = { id: catId, name: n.category, color }
+      return {
+        id: n.id,
+        title: n.title || '无标题',
+        content: n.content || '',
+        excerpt: (n.content || '').substring(0, 80) + ((n.content || '').length > 80 ? '...' : ''),
+        category,
+        createTime: n.createTime,
+        updateTime: n.updateTime,
+        wordCount: (n.content || '').length,
+        isPrivate: !n.isPublic,
+        images: n.images || [],
+        views: 0,
+        likes: n.likeCount ?? 0,
+        comments: 0,
+        isFavorite: n.isCollected ?? false
+      } as AllNote
+    })
+    notes.value.push(...mapped)
+    // 更新分页状态
+    const loaded = notes.value.length
+    hasMore.value = loaded < total
+    page.value += 1
+  } catch (e) {
+    console.error('加载笔记失败', e)
+    showFailToast('加载笔记失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 初始化分类筛选
@@ -468,8 +496,8 @@ const initializeCategoryFilter = (): void => {
 
 // 初始化数据
 onMounted(() => {
-  notes.value = generateMockNotes(20)
   initializeCategoryFilter()
+  fetchNotes()
 })
 </script>
 

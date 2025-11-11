@@ -139,8 +139,12 @@
 </template>
 
 <script lang="ts" setup>
-import { showSuccessToast, showConfirmDialog } from 'vant'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { showSuccessToast, showConfirmDialog, showFailToast } from 'vant'
 import dayjs from 'dayjs'
+import { noteApi } from '@/api/index'
+import type { Note } from '@/types/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -254,41 +258,31 @@ const saveNote = async () => {
   }
   
   saving.value = true
-  
   try {
-    // 模拟保存API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const now = new Date()
-    if (isEditing.value) {
-      noteData.updateTime = now
-      if (timingEnabled.value) {
-        showSuccessToast(`笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}`)
-      } else {
-        showSuccessToast('笔记更新成功')
-      }
-    } else {
-      noteData.id = Date.now()
-      noteData.createTime = now
-      noteData.updateTime = now
-      
-      if (timingEnabled.value) {
-        showSuccessToast(`笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}`)
-      } else {
-        showSuccessToast('笔记保存成功')
-      }
+    const payload: Partial<Note> = {
+      title: noteData.title,
+      content: noteData.content,
+      category: selectedCategory.value?.name || '未分类',
+      isPublic: true
     }
-    
-    // 清除草稿
+
+    if (isEditing.value && noteData.id) {
+      const { data } = await noteApi.updateNote(String(noteData.id), payload)
+      noteData.updateTime = new Date(data.updateTime)
+      showSuccessToast(timingEnabled.value ? `笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}` : '笔记更新成功')
+    } else {
+      const { data } = await noteApi.createNote(payload)
+      noteData.id = data.id as any
+      noteData.createTime = new Date(data.createTime)
+      noteData.updateTime = new Date(data.updateTime)
+      showSuccessToast(timingEnabled.value ? `笔记已设置定时发布：${dayjs(scheduledTime.value).format('MM-DD HH:mm')}` : '笔记保存成功')
+    }
+
     clearDraft()
-    
-    // 返回上一页
-    setTimeout(() => {
-      router.back()
-    }, 500)
-    
+    setTimeout(() => router.back(), 500)
   } catch (error) {
-    showSuccessToast('保存失败，请重试')
+    console.error('保存笔记失败', error)
+    showFailToast('保存失败，请重试')
   } finally {
     saving.value = false
   }
@@ -496,8 +490,7 @@ onMounted(() => {
   // 检查是否是编辑模式
   if (route.params.id) {
     isEditing.value = true
-    // 这里应该加载笔记数据
-    // loadNote(route.params.id)
+    loadNote(String(route.params.id))
   }
   
   // 检查草稿
@@ -515,6 +508,24 @@ onMounted(() => {
 onUnmounted(() => {
   stopAutoSave()
 })
+
+// 加载笔记详情
+const loadNote = async (id: string) => {
+  try {
+    const { data } = await noteApi.getNoteDetail(id)
+    noteData.id = data.id as any
+    noteData.title = data.title || ''
+    noteData.content = data.content || ''
+    // 映射分类名称到ID
+    const cat = categories.value.find(c => c.name === (data.category || '未分类'))
+    noteData.categoryId = cat ? cat.id : 6
+    noteData.createTime = new Date(data.createTime)
+    noteData.updateTime = new Date(data.updateTime)
+  } catch (e) {
+    console.error('加载笔记失败', e)
+    showFailToast('加载笔记失败')
+  }
+}
 </script>
 
 <style lang="scss" scoped>

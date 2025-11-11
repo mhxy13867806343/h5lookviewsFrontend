@@ -36,8 +36,8 @@
           <!-- 消息类型图标 -->
           <div class="message-type-icon">
             <van-icon 
-              :name="getTypeIcon(message.type)" 
-              :color="getTypeColor(message.type)"
+              :name="getTypeIcon()" 
+              :color="getTypeColor()"
               size="14"
             />
           </div>
@@ -100,24 +100,33 @@
 
 <script lang="ts" setup>
 import { formatRelativeTime } from '../../utils/index'
+import { showFailToast } from 'vant'
+import { messageApi } from '@/api'
+import type { Message as BackendMessage, PageResponse } from '@/types/api'
 
 // 类型定义
-interface Message {
+// 后端消息映射到本组件使用的消息结构
+interface MessageUI {
   id: string
-  type: 'like' | 'comment' | 'share' | 'follow'
+  type: 'dynamics'
   user: {
     id: string
     nickname: string
     avatar: string
   }
   createTime: string
-  commentText?: string
+  content: string
   targetId?: string
+  targetType?: 'post' | 'note' | 'comment'
+  relatedPost?: {
+    content: string
+    images?: string[]
+  }
 }
 
 // 事件定义
 const emit = defineEmits<{
-  'item-click': [message: Message]
+  'item-click': [message: MessageUI]
   'remove': [messageId: string]
   'clear-all': []
 }>()
@@ -126,40 +135,23 @@ const emit = defineEmits<{
 const loading = ref<boolean>(false)
 const loadingMore = ref<boolean>(false)
 const finished = ref<boolean>(false)
-const messages = ref<Message[]>([])
+const messages = ref<MessageUI[]>([])
 const currentPage = ref<number>(1)
 
 // 获取消息类型图标
-const getTypeIcon = (type: Message['type']): string => {
-  const icons: Record<Message['type'], string> = {
-    like: 'good-job',
-    comment: 'comment',
-    share: 'share',
-    follow: 'add-o'
-  }
-  return icons[type] || 'bell'
+const getTypeIcon = (): string => {
+  // 由于后端未区分具体动作类型，这里统一使用提醒图标
+  return 'bell'
 }
 
 // 获取消息类型颜色
-const getTypeColor = (type: Message['type']): string => {
-  const colors: Record<Message['type'], string> = {
-    like: '#ff976a',
-    comment: '#1989fa',
-    share: '#07c160',
-    follow: '#ee0a24'
-  }
-  return colors[type] || '#969799'
+const getTypeColor = (): string => {
+  return '#969799'
 }
 
 // 获取消息文本
-const getMessageText = (message: Message): string => {
-  const texts: Record<Message['type'], string> = {
-    like: `赞了你的动态`,
-    comment: `评论了你的动态：${message.commentText || ''}`,
-    share: `分享了你的动态`,
-    follow: `关注了你`
-  }
-  return texts[message.type] || '有新的动态消息'
+const getMessageText = (message: MessageUI): string => {
+  return message.content || '有新的动态消息'
 }
 
 // 格式化时间
@@ -168,6 +160,20 @@ const formatTime = (time: string): string => {
 }
 
 // 加载消息数据
+const mapToUI = (m: BackendMessage): MessageUI => ({
+  id: m.id,
+  type: 'dynamics',
+  user: {
+    id: m.user.id,
+    nickname: m.user.nickname,
+    avatar: m.user.avatar
+  },
+  createTime: m.createTime,
+  content: m.content,
+  targetId: m.targetId,
+  targetType: m.targetType
+})
+
 const loadMessages = async (page = 1) => {
   if (page === 1) {
     loading.value = true
@@ -176,72 +182,18 @@ const loadMessages = async (page = 1) => {
   }
 
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    // 模拟动态消息数据
-    const mockMessages = [
-      {
-        id: `dynamics_${page}_1`,
-        type: 'like',
-        user: {
-          id: 'user001',
-          nickname: '小明',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        createTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        relatedPost: {
-          id: 'post001',
-          content: '今天天气真不错，出去走走~',
-          images: ['https://img.yzcdn.cn/vant/cat.jpeg']
-        }
-      },
-      {
-        id: `dynamics_${page}_2`,
-        type: 'comment',
-        user: {
-          id: 'user002',
-          nickname: '小红',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        commentText: '说得很有道理！',
-        createTime: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        relatedPost: {
-          id: 'post002',
-          content: '分享一些学习心得...',
-          images: []
-        }
-      },
-      {
-        id: `dynamics_${page}_3`,
-        type: 'share',
-        user: {
-          id: 'user003',
-          nickname: '小李',
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg'
-        },
-        createTime: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        relatedPost: {
-          id: 'post003',
-          content: '美食分享：今天做的蛋糕',
-          images: ['https://img.yzcdn.cn/vant/cat.jpeg']
-        }
-      }
-    ]
-
+    const res = await messageApi.getMessages('dynamics', { page, pageSize: 10 })
+    const list = (res.data.list || []).map(mapToUI)
     if (page === 1) {
-      messages.value = mockMessages
+      messages.value = list
     } else {
-      messages.value.push(...mockMessages)
+      messages.value.push(...list)
     }
-
-    // 模拟分页结束
-    if (page >= 3) {
-      finished.value = true
-    }
-
+    // 根据返回的分页信息判断是否结束
+    finished.value = res.data.page * res.data.pageSize >= res.data.total || list.length < res.data.pageSize
   } catch (error) {
     console.error('加载动态消息失败:', error)
+    showFailToast('加载动态消息失败')
   } finally {
     loading.value = false
     loadingMore.value = false
@@ -257,15 +209,27 @@ const loadMore = () => {
 }
 
 // 删除单条消息
-const removeItem = (id) => {
-  messages.value = messages.value.filter(item => item.id !== id)
+const removeItem = async (id: string) => {
+  try {
+    await messageApi.deleteMessage(id)
+    messages.value = messages.value.filter(item => item.id !== id)
+  } catch (error) {
+    console.error('删除动态消息失败:', error)
+    showFailToast('删除失败')
+  }
 }
 
 // 清空所有消息
-const clearAll = () => {
-  messages.value = []
-  currentPage.value = 1
-  finished.value = false
+const clearAll = async () => {
+  try {
+    await messageApi.clearMessages('dynamics')
+    messages.value = []
+    currentPage.value = 1
+    finished.value = false
+  } catch (error) {
+    console.error('清空动态消息失败:', error)
+    showFailToast('清空失败')
+  }
 }
 
 // 数据是否已加载
