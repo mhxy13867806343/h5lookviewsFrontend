@@ -285,10 +285,11 @@ const genderActions: GenderAction[] = [
 
 // 计算属性
 const canAddTag = computed<boolean>(() => {
-  return newTag.value.trim() && 
-         newTag.value.trim().length <= 20 && 
-         formData.value.tags.length < 6 && 
-         !formData.value.tags.includes(newTag.value.trim())
+  const trimmed = newTag.value.trim()
+  return trimmed.length > 0 &&
+         trimmed.length <= 20 &&
+         formData.value.tags.length < 6 &&
+         !formData.value.tags.includes(trimmed)
 })
 
 const availableRecommendedTags = computed<string[]>(() => {

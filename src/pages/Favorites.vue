@@ -78,7 +78,7 @@
             <div class="note-meta">
               <van-tag 
                 :color="note.category.color" 
-                size="mini" 
+                size="medium" 
                 plain
               >
                 {{ note.category.name }}
@@ -367,7 +367,7 @@ const filteredFavorites = computed<FavoriteNote[]>(() => {
         )
         break
       case 'popular':
-        result = result.filter(note => note.likes > 20)
+        result = result.filter(note => (note.likes ?? 0) > 20)
         break
       case 'long':
         result = result.filter(note => note.content.length > 500)
@@ -382,13 +382,13 @@ const filteredFavorites = computed<FavoriteNote[]>(() => {
   result.sort((a, b) => {
     switch (sortType.value) {
       case 'favoriteTime':
-        return new Date(b.favoriteTime) - new Date(a.favoriteTime)
+        return new Date(b.favoriteTime).getTime() - new Date(a.favoriteTime).getTime()
       case 'createTime':
-        return new Date(b.createTime) - new Date(a.createTime)
+        return new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
       case 'updateTime':
-        return new Date(b.updateTime) - new Date(a.updateTime)
+        return new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime()
       case 'popularity':
-        return ((b.views || 0) + (b.likes || 0)) - ((a.views || 0) + (a.likes || 0))
+        return ((b.views ?? 0) + (b.likes ?? 0)) - ((a.views ?? 0) + (a.likes ?? 0))
       default:
         return 0
     }
@@ -480,7 +480,7 @@ const onActionSelect = (action: { name: string; value: string }): void => {
   
   switch (action.value) {
     case 'view':
-      viewNote(currentNote.value)
+      if (currentNote.value) viewNote(currentNote.value)
       break
     case 'share':
       showSuccessToast('分享功能开发中')
@@ -492,7 +492,7 @@ const onActionSelect = (action: { name: string; value: string }): void => {
       showSuccessToast('标签功能开发中')
       break
     case 'unfavorite':
-      removeFavorite(currentNote.value)
+      if (currentNote.value) removeFavorite(currentNote.value)
       break
   }
 }
@@ -574,7 +574,7 @@ const fetchFavorites = async (): Promise<void> => {
           images: n.images || [],
           views: 0,
           likes: n.likeCount ?? 0,
-          favoriteReason: null
+          favoriteReason: undefined
         }
       })
     favorites.value.push(...mapped)
