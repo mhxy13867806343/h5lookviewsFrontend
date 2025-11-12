@@ -180,6 +180,7 @@
 
 <script lang="ts" setup>
 import { showSuccessToast, showFailToast, showDialog } from 'vant'
+import { categoryApi } from '@/api'
 
 // 类型定义
 interface Category {
@@ -204,14 +205,7 @@ const showAddCategory = ref<boolean>(false)
 const showEditCategory = ref<boolean>(false)
 const router = useRouter()
 
-const categories = ref<Category[]>([
-  { id: 1, name: '生活随记', color: '#74b9ff', count: 12 },
-  { id: 2, name: '工作学习', color: '#00b894', count: 8 },
-  { id: 3, name: '美食分享', color: '#fdcb6e', count: 5 },
-  { id: 4, name: '旅行游记', color: '#fd79a8', count: 3 },
-  { id: 5, name: '读书笔记', color: '#6c5ce7', count: 15 },
-  { id: 6, name: '运动健身', color: '#e17055', count: 6 },
-])
+const categories = ref<Category[]>([])
 
 const newCategory = reactive<NewCategory>({
   name: '',
@@ -234,7 +228,7 @@ const totalNotes = computed<number>(() => {
   return categories.value.reduce((sum, cat) => sum + cat.count, 0)
 })
 
-const todayNotes = ref<number>(3) // 模拟今日新增
+const todayNotes = ref<number>(0)
 
 // 方法
 const viewCategoryNotes = (category: Category): void => {
@@ -252,18 +246,20 @@ const editCategory = (category: Category): void => {
   showEditCategory.value = true
 }
 
-const saveEditCategory = (): void => {
+const saveEditCategory = async (): Promise<void> => {
   if (!editingCategory.name.trim()) {
     showFailToast('请输入分类名称')
     return
   }
-
-  const categoryIndex = categories.value.findIndex(c => c.id === editingCategory.id)
-  if (categoryIndex !== -1) {
-    categories.value[categoryIndex].name = editingCategory.name
-    categories.value[categoryIndex].color = editingCategory.color
-    showSuccessToast('分类修改成功')
-    showEditCategory.value = false
+  try {
+    if (editingCategory.id != null) {
+      await categoryApi.updateCategory(editingCategory.id, { name: editingCategory.name, color: editingCategory.color })
+      await loadCategories()
+      showSuccessToast('分类修改成功')
+      showEditCategory.value = false
+    }
+  } catch {
+    showFailToast('分类修改失败')
   }
 }
 
@@ -279,36 +275,37 @@ const deleteCategory = (): void => {
     message: `确定要删除分类"${editingCategory.name}"吗？`,
     showCancelButton: true,
     confirmButtonColor: '#ee0a24',
-  }).then(() => {
-    const categoryIndex = categories.value.findIndex(c => c.id === editingCategory.id)
-    if (categoryIndex !== -1) {
-      categories.value.splice(categoryIndex, 1)
-      showSuccessToast('分类删除成功')
-      showEditCategory.value = false
+  }).then(async () => {
+    try {
+      if (editingCategory.id != null) {
+        await categoryApi.deleteCategory(editingCategory.id)
+        await loadCategories()
+        showSuccessToast('分类删除成功')
+        showEditCategory.value = false
+      }
+    } catch {
+      showFailToast('分类删除失败')
     }
   }).catch(() => {
     // 用户取消删除
   })
 }
 
-const addCategory = (): void => {
+const addCategory = async (): Promise<void> => {
   if (!newCategory.name.trim()) {
     showFailToast('请输入分类名称')
     return
   }
-
-  const newId = Math.max(...categories.value.map(c => c.id)) + 1
-  categories.value.push({
-    id: newId,
-    name: newCategory.name,
-    color: newCategory.color,
-    count: 0
-  })
-
-  showSuccessToast('分类创建成功')
-  newCategory.name = ''
-  newCategory.color = '#74b9ff'
-  showAddCategory.value = false
+  try {
+    await categoryApi.createCategory({ name: newCategory.name, color: newCategory.color, type: 'note' })
+    await loadCategories()
+    showSuccessToast('分类创建成功')
+    newCategory.name = ''
+    newCategory.color = '#74b9ff'
+    showAddCategory.value = false
+  } catch {
+    showFailToast('分类创建失败')
+  }
 }
 
 const viewAllNotes = (): void => {
@@ -334,6 +331,33 @@ const getCurrentCategoryCount = (): number => {
 const viewTrash = (): void => {
   showSuccessToast('查看回收站')
 }
+
+const loadCategories = async (): Promise<void> => {
+  try {
+    const res = await categoryApi.getCategories({ type: 'note' })
+    categories.value = (res.list || []).map((c: any) => ({
+      id: Number(c.id),
+      name: c.name,
+      color: c.color || '#ddd',
+      count: Number(c.count || 0)
+    }))
+    todayNotes.value = 0
+  } catch {
+    categories.value = [
+      { id: 1, name: '生活随记', color: '#74b9ff', count: 12 },
+      { id: 2, name: '工作学习', color: '#00b894', count: 8 },
+      { id: 3, name: '美食分享', color: '#fdcb6e', count: 5 },
+      { id: 4, name: '旅行游记', color: '#fd79a8', count: 3 },
+      { id: 5, name: '读书笔记', color: '#6c5ce7', count: 15 },
+      { id: 6, name: '运动健身', color: '#e17055', count: 6 }
+    ]
+    todayNotes.value = 3
+  }
+}
+
+onMounted(() => {
+  loadCategories()
+})
 </script>
 
 <style lang="scss" scoped>

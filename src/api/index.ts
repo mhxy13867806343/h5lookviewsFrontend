@@ -159,3 +159,30 @@ export const uploadApi = {
     })
   }
 }
+
+// 标签与分类相关API
+export const metaApi = {
+  getRecommendedTags: () => request.get<string[]>('/tags/recommended')
+}
+
+export const categoryApi = {
+  getCategories: (params?: { type?: 'note' | 'post' }) =>
+    request.get<PageResponse<{ id: number; name: string; color?: string; count?: number }>>('/categories', { params }),
+  createCategory: (data: { name: string; color?: string; type?: 'note' | 'post' }) =>
+    request.post('/categories', data),
+  updateCategory: (id: number, data: { name?: string; color?: string }) =>
+    request.put(`/categories/${id}`, data),
+  deleteCategory: (id: number) => request.delete(`/categories/${id}`)
+}
+
+// 位置相关API
+export const locationApi = {
+  list: (params?: { keyword?: string }) =>
+    request.get<PageResponse<{ id: number; name: string; address: string }>>('/locations', { params })
+}
+
+// 用户标签相关API
+export const userTagApi = {
+  getUserTags: (userId: string) => request.get<string[]>(`/users/${userId}/tags`),
+  saveUserTags: (userId: string, tags: string[]) => request.put(`/users/${userId}/tags`, { tags })
+}

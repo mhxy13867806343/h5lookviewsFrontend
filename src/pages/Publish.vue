@@ -139,7 +139,7 @@
 
 <script lang="ts" setup>
 import { showSuccessToast, showFailToast, showConfirmDialog } from 'vant'
-import { noteApi, uploadApi } from '@/api'
+import { noteApi, uploadApi, categoryApi, locationApi } from '@/api'
 
 // 类型定义
 interface LocationOption {
@@ -182,19 +182,9 @@ const locationSearch = ref<string>('')
 const tempLocation = ref<LocationOption | null>(null)
 const tempCategory = ref<Category | null>(null)
 
-// 模拟数据
-const locationOptions = ref<LocationOption[]>([
-  { id: 1, name: '北京市朝阳区', address: '朝阳区三里屯' },
-  { id: 2, name: '上海市黄浦区', address: '黄浦区南京路' },
-  { id: 3, name: '深圳市南山区', address: '南山区科技园' },
-])
+const locationOptions = ref<LocationOption[]>([])
 
-const categories = ref<Category[]>([
-  { id: 1, name: '生活随记', color: '#74b9ff' },
-  { id: 2, name: '工作学习', color: '#00b894' },
-  { id: 3, name: '美食分享', color: '#fdcb6e' },
-  { id: 4, name: '旅行游记', color: '#fd79a8' },
-])
+const categories = ref<Category[]>([])
 
 // 方法
 const goBack = () => {
@@ -302,6 +292,33 @@ onMounted(() => {
   if (isTextOnlyMode.value) {
     showSuccessToast('已进入快捷发布模式')
   }
+  ;(async () => {
+    try {
+      const res = await categoryApi.getCategories({ type: 'note' })
+      categories.value = (res.list || []).map((c: any) => ({
+        id: Number(c.id),
+        name: c.name,
+        color: c.color || '#ddd'
+      }))
+    } catch {
+      categories.value = [
+        { id: 1, name: '生活随记', color: '#74b9ff' },
+        { id: 2, name: '工作学习', color: '#00b894' },
+        { id: 3, name: '美食分享', color: '#fdcb6e' },
+        { id: 4, name: '旅行游记', color: '#fd79a8' }
+      ]
+    }
+    try {
+      const loc = await locationApi.list({ keyword: locationSearch.value || undefined })
+      locationOptions.value = (loc.list || [])
+    } catch {
+      locationOptions.value = [
+        { id: 1, name: '北京市朝阳区', address: '朝阳区三里屯' },
+        { id: 2, name: '上海市黄浦区', address: '黄浦区南京路' },
+        { id: 3, name: '深圳市南山区', address: '南山区科技园' }
+      ]
+    }
+  })()
 })
 </script>
 
